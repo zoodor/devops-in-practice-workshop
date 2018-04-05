@@ -18,7 +18,6 @@ Create a new file called `Dockerfile` at the root of the project, with the follo
 
 ```Dockerfile
 FROM openjdk:8-jdk-alpine
-VOLUME /tmp
 ARG JAR_FILE
 
 ADD ${JAR_FILE} app.jar
@@ -38,22 +37,20 @@ the specified tag `pet-app`:
 
 ```shell
 $ docker build --tag=pet-app --build-arg JAR_FILE=target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar .
-Sending build context to Docker daemon  49.91MB
-Step 1/5 : FROM openjdk:8-jdk-alpine
+Sending build context to Docker daemon  49.94MB
+Step 1/4 : FROM openjdk:8-jdk-alpine
  ---> 224765a6bdbe
-Step 2/5 : VOLUME /tmp
- ---> Using cache
- ---> 974dde5c7d99
-Step 3/5 : ARG JAR_FILE
- ---> Using cache
- ---> 240b721e4168
-Step 4/5 : ADD ${JAR_FILE} app.jar
- ---> 4c7421b72aa8
-Step 5/5 : ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
- ---> Running in fe55baeed48e
-Removing intermediate container fe55baeed48e
- ---> 74ffe8466331
-Successfully built 74ffe8466331
+Step 2/4 : ARG JAR_FILE
+ ---> Running in 0877d85ce6d9
+Removing intermediate container 0877d85ce6d9
+ ---> d21d87bb325b
+Step 3/4 : ADD ${JAR_FILE} app.jar
+ ---> 5847c211645b
+Step 4/4 : ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+ ---> Running in 8222db3a6215
+Removing intermediate container 8222db3a6215
+ ---> 627600574e8e
+Successfully built 627600574e8e
 Successfully tagged pet-app:latest
 ```
 
@@ -62,7 +59,7 @@ Ensure the container image was created and tagged correctly:
 ```shell
 $ docker image ls pet*
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-pet-app             latest              74ffe8466331        7 minutes ago       140MB
+pet-app             latest              627600574e8e        30 seconds ago      140MB
 ```
 
 Let's run a docker container in daemon mode to start up our application and expose
