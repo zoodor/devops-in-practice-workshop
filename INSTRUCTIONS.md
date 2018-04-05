@@ -20,8 +20,10 @@
 
 ## Step by Step Instructions
 
+
 ```shell
-$ docker run -d --name pet-db -e MYSQL_RANDOM_ROOT_PASSWORD=yes -e MYSQL_DATABASE=petclinic -e MYSQL_USER=petclinic-user -e MYSQL_PASSWORD=S3cr3t mysql:5.7
+$ mkdir data
+$ docker run -d --name pet-db -v $PWD/data:/var/lib/mysql -e MYSQL_RANDOM_ROOT_PASSWORD=yes -e MYSQL_DATABASE=petclinic -e MYSQL_USER=petclinic-user -e MYSQL_PASSWORD=S3cr3t mysql:5.7
 ```
 
 ```shell
