@@ -1,43 +1,75 @@
-# Exercise 2 - Running with a Persistent Database
+# Exercise 3 - Bundling containers with Docker Compose
 
 ## Goals
 
-* Decouple database service from the Application
-* Run a MySQL database on Docker
-* Learn about Docker persistent volumes and linking container
-* Re-run the application on Docker
+* Define and run multi-container Docker application with Docker Compose
 
 ## Acceptance Criteria
 
-* Application configuration modified to connect to MySQL database
-* Docker image is rebuilt and tagged as `pet-app`
-* MySQL running in Docker
-* Application running in Docker and linked to MySQL container
-* Application can be accessed on http://localhost:8080
-* New owner is created, with at least 1 pet
-* Kill and restart application container
-* Owner created in previous step is still available
+* Running `docker-compose up` should rebuild and launch MySQL and application containers
 
 ## Step by Step Instructions
 
+Create a file called `docker-compose.yml` at the root of the project with the following
+content:
 
-```shell
-$ mkdir data
-$ docker run -d --name pet-db -v $PWD/data:/var/lib/mysql -e MYSQL_RANDOM_ROOT_PASSWORD=yes -e MYSQL_DATABASE=petclinic -e MYSQL_USER=petclinic-user -e MYSQL_PASSWORD=S3cr3t mysql:5.7
+```yaml
+version: '2'
+
+services:
+  pet-app:
+    build:
+      context: .
+      image: pet-app
+      args:
+        JAR_FILE: "./target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar"
+    ports:
+      - "8080:8080"
+    links:
+      - database:pet-db
+    environment:
+      SPRING_PROFILES_ACTIVE: "mysql"
+  database:
+    image: mysql:5.7
+    expose:
+      - 3306
+    volumes:
+      - ./data:/var/lib/mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: "petclinic"
+      MYSQL_USER: "petclinic-user"
+      MYSQL_PASSWORD: "S3cr3t"
 ```
 
 ```shell
-$ docker run --name=pet-app-prod -d -p 8080:8080 -e "SPRING_PROFILES_ACTIVE=mysql" --link pet-db pet-app
-ff776db53488ff18644bfd79e39f7101501dbfd4cc0216f041051a1155a8adaf
+$ docker-compose build
+database uses an image, skipping
+Building pet-app
+Step 1/4 : FROM openjdk:8-jdk-alpine
+ ---> 224765a6bdbe
+Step 2/4 : ARG JAR_FILE
+ ---> Using cache
+ ---> d21d87bb325b
+Step 3/4 : ADD ${JAR_FILE} app.jar
+ ---> 05b4e0502c2e
+Step 4/4 : ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+ ---> Running in 116e70b2b89e
+Removing intermediate container 116e70b2b89e
+ ---> 66d4ecdaae23
+Successfully built 66d4ecdaae23
+Successfully tagged devopsinpracticeworkshop_pet-app:latest
+```
+
+```shell
+$ docker-compose up
+Starting devopsinpracticeworkshop_database_1 ... done
+Recreating devopsinpracticeworkshop_pet-app_1 ... done
+Attaching to devopsinpracticeworkshop_database_1, devopsinpracticeworkshop_pet-app_1
+database_1  | 2018-04-05T21:18:53.544497Z 0 [Warning] TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details).
+database_1  | 2018-04-05T21:18:53.560127Z 0 [Note] mysqld (mysqld 5.7.21) starting as process 1 ...
+
+...
 ```
 
 Then you should be able to access the application by going to http://localhost:8080.
-
-To shutdown, you can stop and remove the container:
-
-```shell
-$ docker stop 11ac55ff100dc3
-11ac55ff100dc3
-$ docker rm 11ac55ff100dc3
-11ac55ff100dc3
-```
