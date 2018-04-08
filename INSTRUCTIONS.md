@@ -66,7 +66,7 @@ Create the kubernetes definition file:
 apiVersion: v1
 kind: Service
 metadata:
-  name: pet-mysql
+  name: pet-db
   labels:
     app: pet
 spec:
@@ -74,13 +74,13 @@ spec:
     - port: 3306
   selector:
     app: pet
-    tier: mysql
+    tier: db
   clusterIP: None
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mysql-pv-claim
+  name: db-pv-claim
   labels:
     app: pet
 spec:
@@ -93,21 +93,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pet-mysql
+  name: pet-db
   labels:
     app: pet
 spec:
   selector:
     matchLabels:
       app: pet
-      tier: mysql
+      tier: db
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
         app: pet
-        tier: mysql
+        tier: db
     spec:
       containers:
       - image: mysql:5.7
@@ -133,7 +133,7 @@ spec:
       volumes:
       - name: mysql-persistent-storage
         persistentVolumeClaim:
-          claimName: mysql-pv-claim
+          claimName: db-pv-claim
 ```
 
 Create a file called `deploy.sh` with the following content:
