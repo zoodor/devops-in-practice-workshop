@@ -38,6 +38,15 @@ spec:
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: mysql
+        - name: PET_DB_DATABASE
+          value: petclinic
+        - name: PET_DB_USER
+          value: petclinic-user
+        - name: PET_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         ports:
         - containerPort: 8080
           name: pet-web

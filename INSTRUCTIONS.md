@@ -12,11 +12,30 @@
 required to deploy a single-instance Pet application and connect it to the MySQL
 service
 * Update the `deploy.sh` script at the root of the project to deploy the application
+* Update the application to read database configuration from environment variables
 * Application is exposed on the host and can be accessed on `http://<CLUSTER_IP>:8080`
 
 ## Step by Step Instructions
 
-Create the kubernetes definition file `kubernetes/web.yml`:
+Kubernetes adds environment variables for every active service when launching
+new pods, which allows us to perform service discovery. The relevant variables
+for our MySQL database service are `PET_DB_SERVICE_HOST` and `PET_DB_SERVICE_PORT`,
+so we can change our application's `src/resources/application-mysql.properties`
+configuration to use that and other information that will be defined in the
+Kubernetes definition file:
+
+```properties
+# database init, supports mysql too
+database=mysql
+spring.datasource.url=jdbc:mysql://${PET_DB_SERVICE_HOST}:${PET_DB_SERVICE_PORT}/${PET_DB_DATABASE}
+spring.datasource.username=${PET_DB_USER}
+spring.datasource.password=${PET_DB_PASSWORD}
+# Uncomment this the first time the app runs
+spring.datasource.initialization-mode=always
+```
+
+Create the kubernetes definition file `kubernetes/web.yml`, which will define the
+other environment variables and access the MySQL password secret:
 
 ```yaml
 apiVersion: v1
@@ -59,18 +78,41 @@ spec:
         env:
         - name: SPRING_PROFILES_ACTIVE
           value: mysql
+        - name: PET_DB_DATABASE
+          value: petclinic
+        - name: PET_DB_USER
+          value: petclinic-user
+        - name: PET_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         ports:
         - containerPort: 8080
           name: pet-web
 ```
 
-Update the `deploy.sh` script to apply the web k8s objects:
+Now we can repackage our application with Maven:
 
-```bash
-#!/usr/bin/env bash
-set -xe
-kubectl apply -f kubernetes/mysql.yml
-kubectl apply -f kubernetes/web.yml
+```shell
+$ ./mvnw package
+[INFO] Scanning for projects...
+[INFO]                                                                         
+[INFO] ------------------------------------------------------------------------
+[INFO] Building petclinic 2.0.0.BUILD-SNAPSHOT
+[INFO] ------------------------------------------------------------------------
+[INFO]
+
+...
+
+[INFO] --- spring-boot-maven-plugin:2.0.0.RELEASE:repackage (default) @ spring-petclinic ---
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 01:35 min
+[INFO] Finished at: 2018-04-10T13:16:01+01:00
+[INFO] Final Memory: 95M/591M
+[INFO] ------------------------------------------------------------------------
 ```
 
 We need to rebuild our image using the Docker daemon inside of minikube:
@@ -109,7 +151,16 @@ REPOSITORY          TAG                 IMAGE ID            CREATED             
 pet-app             latest              2e68f5165a1e        3 minutes ago       140MB
 ```
 
-Re-deploy:
+Now we can update the `deploy.sh` script to apply the web k8s objects:
+
+```bash
+#!/usr/bin/env bash
+set -xe
+kubectl apply -f kubernetes/mysql.yml
+kubectl apply -f kubernetes/web.yml
+```
+
+And re-deploy:
 
 ```shell
 $ ./deploy.sh
