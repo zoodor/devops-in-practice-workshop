@@ -75,7 +75,6 @@ spec:
   selector:
     app: pet
     tier: db
-  clusterIP: None
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
