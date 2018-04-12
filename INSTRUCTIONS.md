@@ -110,6 +110,8 @@ deployment "pet-db" unchanged
 + kubectl apply -f kubernetes/web.yml
 service "pet-web" unchanged
 deployment "pet-web" configured
+$ kubectl rollout status deployment pet-web
+Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
 $ kubectl get pod
 NAME                       READY     STATUS              RESTARTS   AGE
 pet-db-7997cf844-d584n     1/1       Running             2          1d
@@ -118,6 +120,8 @@ pet-web-6cdf7fcdff-fx5b9   1/1       Running             0          1m
 pet-web-6cdf7fcdff-vv9pc   1/1       Terminating         0          1m
 pet-web-8c8d8769c-8b66p    1/1       Running             0          13s
 pet-web-8c8d8769c-9xd5c    0/1       ContainerCreating   0          5s
+$ kubectl rollout status deployment pet-web
+deployment "pet-web" successfully rolled out
 $ kubectl get pod
 NAME                       READY     STATUS        RESTARTS   AGE
 pet-db-7997cf844-d584n     1/1       Running       2          1d
@@ -127,6 +131,11 @@ pet-web-6cdf7fcdff-vv9pc   0/1       Terminating   0          1m
 pet-web-8c8d8769c-8b66p    1/1       Running       0          21s
 pet-web-8c8d8769c-9xd5c    1/1       Running       0          13s
 pet-web-8c8d8769c-szgf7    1/1       Running       0          5s
+$ kubectl get replicaset
+NAME                 DESIRED   CURRENT   READY     AGE
+pet-db-7997cf844     1         1         1         1d
+pet-web-6cdf7fcdff   0         0         0         1d
+pet-web-8c8d8769c    3         3         3         10m
 ```
 
 Get the service URL and open it in your browser (in this case http://192.168.99.100:30596)
