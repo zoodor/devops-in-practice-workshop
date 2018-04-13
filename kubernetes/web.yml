@@ -32,8 +32,8 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: pet-app:step-7
-        imagePullPolicy: Never
+      - image: us.gcr.io/devops-workshop-201010/pet-app
+        imagePullPolicy: IfNotPresent
         name: pet-web
         env:
         - name: SPRING_PROFILES_ACTIVE
