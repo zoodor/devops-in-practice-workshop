@@ -12,7 +12,7 @@
 
 * Initialize helm to deploy charts to our GKE cluster
 * Install and configure GoCD chart to use elastic agents
-* Create the "PetClinic" pipeline, with a single "test" stage containing a single
+* Create the "PetClinic" pipeline, with a single "commit" stage containing a single
 "build-and-publish" job that will compile, test, package the `jar`, build a docker
 image, and publish it to GCR
 
@@ -242,7 +242,7 @@ https://github.com/dtsato/devops-in-practice-workshop.git and `step-9`. You can
 test the connection is configured properly by clicking the "CHECK CONNECTION"
 button. If everything is OK, you can click "NEXT" to move to the final page.
 
-Let's configure the stages and jobs of this pipeline. We'll start with a `test`
+Let's configure the stages and jobs of this pipeline. We'll start with a `commit`
 stage, with an initial job called `build-and-publish` that will use our `docker-jdk`
 Elastic Agent Profile. We will add an initial task of type "More..." which
 allows us to setup the command and arguments below:
