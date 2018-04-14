@@ -13,6 +13,6 @@ pipeline = configurator\
 	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="step-13", ignore_patterns=set(['pipelines/*'])))
 stage = pipeline.ensure_stage("update-pipelines")
 job = stage.ensure_job("update-pipelines")
-job.add_task(ExecTask(['pipelines/update.sh']))
+job.set_elastic_profile_id('docker').add_task(ExecTask(['pipelines/update.sh']))
 
 configurator.save_updated_config()
