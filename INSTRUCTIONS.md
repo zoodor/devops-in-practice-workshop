@@ -279,10 +279,10 @@ the pipeline executes. The other variables we need to define by going into the
 "Environment Variables" tab and creating the following:
 
 * Environment Variables:
-** `MAVEN_OPTS=-Xmx1024m`
-** `GCLOUD_PROJECT_ID=devops-workshop-123`
+  * `MAVEN_OPTS=-Xmx1024m`
+  * `GCLOUD_PROJECT_ID=devops-workshop-123`
 * Secure Variables:
-** `GCLOUD_SERVICE_KEY=[...]`
+  * `GCLOUD_SERVICE_KEY=[...]`
 
 Replace the project ID, and for the `GCLOUD_SERVICE_KEY` run the following command
 and copy/paste the output into the secure variable:
