@@ -113,7 +113,7 @@ configurator = GoCdConfigurator(HostRestClient(go_server_url))
 pipeline = configurator\
 	.ensure_pipeline_group("defaultGroup")\
 	.ensure_replacement_of_pipeline("Meta")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*'])))
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*']), invert_filter='true'))
 stage = pipeline.ensure_stage("update-pipelines")
 job = stage.ensure_job("update-pipelines")
 job.set_elastic_profile_id('docker').add_task(ExecTask(['pipelines/update.sh']))
@@ -124,7 +124,8 @@ configurator.save_updated_config()
 We are adding some code to parse the GoCD Server URL from the environment variable
 and on the last two lines, we added a config to set the Elastic Profile Id and
 removed the named arguments to actually save the configuration, and not just do
-a dry-run.
+a dry-run. We also change the `GitMaterial` config to include the `invert_filter='true'`
+that was missing.
 
 Once you commit and push this code, the Meta pipeline should trigger again, and
 this time the above code will invoke GoMatic.
