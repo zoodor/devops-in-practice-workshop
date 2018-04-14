@@ -214,7 +214,7 @@ the account and grant the appropriate role, replacing the project ID accordingly
 ```shell
 $ gcloud iam service-accounts create gocd-agent
 Created service account [gocd-agent].
-$ gcloud projects add-iam-policy-binding devops-workshop-201010 --member serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com --role roles/storage.admin
+$ gcloud projects add-iam-policy-binding devops-workshop-123 --member serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com --role roles/storage.admin
 bindings:
 - members:
   - serviceAccount:service-190704809516@container-engine-robot.iam.gserviceaccount.com
