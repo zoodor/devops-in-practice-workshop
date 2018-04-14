@@ -10,7 +10,6 @@
 
 * Pipeline code should be placed under a new `pipelines` folder at the root of
 the project
-* Configure a new Elastic Agent Profile that can execute `python` scripts
 * Exclude the `pipelines` folder as a trigger to the "PetClinic" pipeline
 * Create a new "Meta" pipeline triggered on changes to the `pipelines` folder
 only, that executes the python scripts using GoMatic
@@ -40,7 +39,7 @@ set -xe
 
 CWD=$(cd $(dirname $0) && pwd)
 for pipeline in $CWD/*.py; do
-  docker run -it --rm -v "$CWD":/usr/src/meta -w /usr/src/meta python:2.7-slim /bin/bash -c "pip install gomatic && python $(basename $pipeline)"
+  docker run -i --rm -v "$CWD":/usr/src/meta -w /usr/src/meta -e GO_SERVER_URL=$GO_SERVER_URL python:2.7-slim /bin/bash -c "pip install gomatic && python $(basename $pipeline)"
 done
 ```
 
@@ -55,7 +54,7 @@ when changes occur to the `pipelines` folder. Click on the "ADMIN" menu and sele
 "Pipelines". Click on "Edit" for "PetClinc" pipeline and go to the "Materials"
 tab. Opening the Git material, add the following configuration to the Blacklist:
 
-* Paths to be excluded: `pipelines`
+* Paths to be excluded: `pipelines/*`
 
 Now we can commit and push our changes to introduce the placeholder scripts and
 it should not trigger a pipeline execution.
@@ -69,7 +68,7 @@ click "NEXT". Then on the next step, use the following configuration:
 * Material Type: `Git`
 * URL: Same as before, use the Git URL for your repository
 * Branch: `master`
-* Blacklist: `pipelines`
+* Blacklist: `pipelines/*`
 * Invert the file filter: Checked
 
 Once again, you can test by clicking on "CHECK CONNECTION" before proceeding with
@@ -82,3 +81,116 @@ clicking "NEXT". In the final step, use the following configuration:
 
 We can then click on "FINISH". We can now unpause the pipeline and test that it
 runs successfully.
+
+### Pipeline as code for Meta pipeline
+
+Once the build succeeds, let's update the dummy script to setup the pipeline
+based on its current state. GoMatic has a feature to export the current pipeline
+configuration as code, so we can run this command locally, replacing the IP
+address with your GoCD Server public IP from GKE:
+
+```shell
+$ docker run -i --rm python:slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
+Collecting gomatic
+  Downloading gomatic-0.5.10.tar.gz
+...
+```
+
+You can see that at the end of the execution, there is some Python code that we
+can copy and paste and use as the template for our pipeline configuration as code.
+Paste it on the `pipelines/meta_pipeline.py` script and make a few tweaks:
+
+```python
+#!/usr/bin/env python
+from gomatic import *
+import os, re
+
+print "Updating Meta Pipeline..."
+
+go_server_host = re.search('https?://([a-z0-9.\-._~%]+)', os.environ['GO_SERVER_URL']).group(1)
+go_server_url = "%s:%s" % (go_server_host, "8153")
+configurator = GoCdConfigurator(HostRestClient(go_server_url))
+pipeline = configurator\
+	.ensure_pipeline_group("defaultGroup")\
+	.ensure_replacement_of_pipeline("Meta")\
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*'])))
+stage = pipeline.ensure_stage("update-pipelines")
+job = stage.ensure_job("update-pipelines")
+job.set_elastic_profile_id('docker').add_task(ExecTask(['pipelines/update.sh']))
+
+configurator.save_updated_config()
+```
+
+We are adding some code to parse the GoCD Server URL from the environment variable
+and on the last two lines, we added a config to set the Elastic Profile Id and
+removed the named arguments to actually save the configuration, and not just do
+a dry-run.
+
+Once you commit and push this code, the Meta pipeline should trigger again, and
+this time the above code will invoke GoMatic.
+
+### Pipeline as code for PetClinic pipeline
+
+Finally, let's extract the pipeline configuration for the "PetClinic" pipeline,
+by executing the same GoMatic command locally, changing the pipeline name and
+using your GoCD Server URL:
+
+```shell
+$ docker run -i --rm python:slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p PetClinic
+Collecting gomatic
+  Downloading gomatic-0.5.10.tar.gz
+...
+```
+
+At the end of the execution, you can once again copy and paste the Python code
+into the `pipelines/pet_clinic_pipeline.py` script, and make the same tweaks:
+
+```python
+#!/usr/bin/env python
+from gomatic import *
+import os, re
+
+print "Updating PetClinic Pipeline..."
+go_server_host = re.search('https?://([a-z0-9.\-._~%]+)', os.environ['GO_SERVER_URL']).group(1)
+go_server_url = "%s:%s" % (go_server_host, "8153")
+configurator = GoCdConfigurator(HostRestClient(go_server_url))
+secret_variables = {'GCLOUD_SERVICE_KEY': 'lKD+DoKDGtCsaToW...'}
+pipeline = configurator\
+	.ensure_pipeline_group("defaultGroup")\
+	.ensure_replacement_of_pipeline("PetClinic")\
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*'])))
+stage = pipeline.ensure_stage("commit")
+job = stage\
+    .ensure_job("build-and-publish")\
+    .ensure_artifacts({TestArtifact("target/surefire-reports", "surefire-reports")})\
+    .ensure_environment_variables({'MAVEN_OPTS': '-Xmx1024m', 'GCLOUD_PROJECT_ID': 'devops-workshop-123'})\
+    .ensure_encrypted_environment_variables(secret_variables)
+job.set_elastic_profile_id('docker')
+job.add_task(ExecTask(['./mvnw', 'clean', 'package']))
+job.add_task(ExecTask(['bash', '-c', 'docker build --tag pet-app:$GO_PIPELINE_LABEL --build-arg JAR_FILE=target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar .']))
+job.add_task(ExecTask(['bash', '-c', 'docker login -u _json_key -p"$(echo $GCLOUD_SERVICE_KEY | base64 -d)" https://us.gcr.io']))
+job.add_task(ExecTask(['bash', '-c', 'docker tag pet-app:$GO_PIPELINE_LABEL us.gcr.io/$GCLOUD_PROJECT_ID/pet-app:$GO_PIPELINE_LABEL']))
+job.add_task(ExecTask(['bash', '-c', 'docker push us.gcr.io/$GCLOUD_PROJECT_ID/pet-app:$GO_PIPELINE_LABEL']))
+stage = pipeline.ensure_stage("deploy")
+job = stage\
+    .ensure_job("deploy")\
+    .ensure_environment_variables({'GCLOUD_ZONE': 'us-central1-a', 'GCLOUD_PROJECT_ID': 'devops-workshop-123', 'GCLOUD_CLUSTER': 'devops-workshop-gke'})\
+    .ensure_encrypted_environment_variables(secret_variables)
+job.set_elastic_profile_id('docker-kubectl')
+job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > secret.json && chmod 600 secret.json']))
+job.add_task(ExecTask(['bash', '-c', 'gcloud auth activate-service-account --key-file secret.json']))
+job.add_task(ExecTask(['bash', '-c', 'gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --project $GCLOUD_PROJECT_ID']))
+job.add_task(ExecTask(['bash', '-c', './deploy.sh']))
+job.add_task(ExecTask(['bash', '-c', 'rm secret.json']))
+
+configurator.save_updated_config()
+```
+
+Please note that we once again added some code to parse the GoCD Server URL, set
+the Elastic Profile IDs for both jobs, and removed the arguments from the last
+line. We also added an extra line to the `build-and-publish` job to collect the
+test report artifacts from surefire. This allows us to test that the pipeline
+configuration is getting updated after the Meta pipeline executes.
+
+Once again, when you commit and push these changes, the "Meta" pipeline should
+trigger and reconfigure the PetClinic pipeline.
