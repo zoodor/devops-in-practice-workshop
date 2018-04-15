@@ -1,197 +1,150 @@
-# Exercise 13 - Pipeline as Code
+# Exercise 14 - Canary Release
 
 ## Goals
 
-* Learn about Pipeline as Code
-* Learn about GoMatic
-* Create a new pipeline for updating GoCD pipelines
+* Learn about Canary Release
+* Learn about GoCD manual workflows
 
 ## Acceptance Criteria
 
-* Pipeline code should be placed under a new `pipelines` folder at the root of
-the project
-* Exclude the `pipelines` folder as a trigger to the "PetClinic" pipeline
-* Create a new "Meta" pipeline triggered on changes to the `pipelines` folder
-only, that executes the python scripts using GoMatic
-* Use GoMatic locally to export the current pipeline configurations and convert
-them into pipeline scripts
+* Create a `web-canary.yml` kubernetes definition to implement canary releases
+* Update the `deploy.sh` script to deploy the canary release only
+* Create a `complete-canary.sh` script to complete the canary release rollout
+* Extend the PetClinic pipeline (using GoMatic) to add a new stage with a manual
+approval to complete the canary release using the above scripts
 
 ## Step by Step Instructions
 
-### Creating placeholder scripts
+First, let's create a new `kubernetes/web-canary.yml` file with a deployment
+definition similar to the `kubernetes/web.yml` but with a new name and an extra
+label `track` with value `canary`:
 
-First, let's create the folder and a few dummy scripts for each of the pipelines,
-to serve as placeholder test scripts:
-
-```shell
-$ mkdir pipelines
-$ echo "print \"Updating Meta Pipeline...\"" > pipelines/meta_pipeline.py
-$ echo "print \"Updating PetClinic Pipeline...\"" > pipelines/pet_clinic_pipeline.py
+```yaml
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: pet-web-canary
+  labels:
+    app: pet
+spec:
+  selector:
+    matchLabels:
+      app: pet
+      tier: frontend
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: pet
+        tier: frontend
+        track: canary
+    spec:
+      containers:
+      - image: us.gcr.io/devops-workshop-201010/pet-app
+        imagePullPolicy: IfNotPresent
+        name: pet-web
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: mysql
+        - name: PET_DB_DATABASE
+          value: petclinic
+        - name: PET_DB_USER
+          value: petclinic-user
+        - name: PET_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 8080
+          name: pet-web
 ```
 
-Let's also create a `pipelines/update.sh` script that will be executed by the
-meta pipeline to invoke the dummy scripts inside a Docker container with
-Python and GoMatic:
+Let's also update the `kubernetes/web.yml` definition to include the label
+`track` with value `stable`:
+
+```yaml
+...
+template:
+  metadata:
+    labels:
+      app: pet
+      tier: frontend
+      track: stable
+...
+```
+
+Now we can update our `deploy.sh` script to fetch the current version and keep
+it as the stable deploy, but use the new image as the canary release with a new
+deployment:
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
 set -xe
 
-CWD=$(cd $(dirname $0) && pwd)
-for pipeline in $CWD/*.py; do
-  docker run -i --rm -v "$CWD":/usr/src/meta -w /usr/src/meta -e GO_SERVER_URL=$GO_SERVER_URL python:2.7-slim /bin/bash -c "pip install gomatic && python $(basename $pipeline)"
-done
+echo "Deploying pet-db..."
+kubectl apply -f kubernetes/mysql.yml --namespace default
+
+IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
+PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
+CURRENT_VERSION=$(kubectl get deployment pet-web -o jsonpath="{..image}" | cut -d':' -f2)
+echo "Current version: $CURRENT_VERSION"
+echo "Deploying pet-web canary image version: $IMAGE_VERSION"
+
+cat kubernetes/web.yml | sed "s/\(image: \).*$/\1us.gcr.io\/$PROJECT_ID\/pet-app:$CURRENT_VERSION/" | kubectl apply -f - --namespace default
+cat kubernetes/web-canary.yml | sed "s/\(image: \).*$/\1us.gcr.io\/$PROJECT_ID\/pet-app:$IMAGE_VERSION/" | kubectl apply -f - --namespace default
 ```
 
-Make sure the new script is executable:
+Now let's create a new `complete-canary.sh` script that will be invoked manually
+from our pipeline, when we decide to complete the canary rollout:
+
+```bash
+#!/usr/bin/env bash
+set -xe
+
+echo "Completing canary release of pet-db..."
+
+IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
+PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
+CURRENT_VERSION=$(kubectl get deployment pet-web -o jsonpath="{..image}" | cut -d':' -f2)
+echo "Updating pet-web deployment from version $CURRENT_VERSION to $IMAGE_VERSION"
+
+cat kubernetes/web.yml | sed "s/\(image: \).*$/\1us.gcr.io\/$PROJECT_ID\/pet-app:$IMAGE_VERSION/" | kubectl apply -f - --namespace default
+```
+
+Don't forget to make the script executable:
 
 ```shell
-$ chmod a+x pipelines/update.sh
+$ chmod a+x complete-canary.sh
 ```
 
-Now let's update the current "PetClinic" pipeline configuration to not trigger
-when changes occur to the `pipelines` folder. Click on the "ADMIN" menu and select
-"Pipelines". Click on "Edit" for "PetClinc" pipeline and go to the "Materials"
-tab. Opening the Git material, add the following configuration to the Blacklist:
-
-* Paths to be excluded: `pipelines/*`
-
-Now we can commit and push our changes to introduce the placeholder scripts and
-it should not trigger a pipeline execution.
-
-### Creating the meta pipeline
-
-From the "ADMIN" menu, select "Pipelines", and click on "Create a new pipeline
-within this group". The first step will setup the pipeline name to "Meta" and
-click "NEXT". Then on the next step, use the following configuration:
-
-* Material Type: `Git`
-* URL: Same as before, use the Git URL for your repository
-* Branch: `master`
-* Blacklist: `pipelines/*`
-* Invert the file filter: Checked
-
-Once again, you can test by clicking on "CHECK CONNECTION" before proceeding with
-clicking "NEXT". In the final step, use the following configuration:
-
-* Stage Name: `update-pipelines`
-* Job Name: `update-pipelines`
-* Task Type: `More...`
-* Command: `pipelines/update.sh`
-
-We can then click on "FINISH". We can now unpause the pipeline and test that it
-runs successfully.
-
-### Pipeline as code for Meta pipeline
-
-Once the build succeeds, let's update the dummy script to setup the pipeline
-based on its current state. GoMatic has a feature to export the current pipeline
-configuration as code, so we can run this command locally, replacing the IP
-address with your GoCD Server public IP from GKE:
-
-```shell
-$ docker run -i --rm python:slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
-Collecting gomatic
-  Downloading gomatic-0.5.10.tar.gz
-...
-```
-
-You can see that at the end of the execution, there is some Python code that we
-can copy and paste and use as the template for our pipeline configuration as code.
-Paste it on the `pipelines/meta_pipeline.py` script and make a few tweaks:
+Finally, we can update our `pipelines/pet_clinic_pipeline.py` script to add a
+new manual stage and job to execute the `complete_canary.sh` script, after the
+definition of the `deploy` stage:
 
 ```python
-#!/usr/bin/env python
-from gomatic import *
-import os, re
-
-print "Updating Meta Pipeline..."
-
-go_server_host = re.search('https?://([a-z0-9.\-._~%]+)', os.environ['GO_SERVER_URL']).group(1)
-go_server_url = "%s:%s" % (go_server_host, "8153")
-configurator = GoCdConfigurator(HostRestClient(go_server_url))
-pipeline = configurator\
-	.ensure_pipeline_group("defaultGroup")\
-	.ensure_replacement_of_pipeline("Meta")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*']), invert_filter='true'))
-stage = pipeline.ensure_stage("update-pipelines")
-job = stage.ensure_job("update-pipelines")
-job.set_elastic_profile_id('docker').add_task(ExecTask(['pipelines/update.sh']))
-
-configurator.save_updated_config()
-```
-
-We are adding some code to parse the GoCD Server URL from the environment variable
-and on the last two lines, we added a config to set the Elastic Profile Id and
-removed the named arguments to actually save the configuration, and not just do
-a dry-run. We also change the `GitMaterial` config to include the `invert_filter='true'`
-that was missing.
-
-Once you commit and push this code, the Meta pipeline should trigger again, and
-this time the above code will invoke GoMatic.
-
-### Pipeline as code for PetClinic pipeline
-
-Finally, let's extract the pipeline configuration for the "PetClinic" pipeline,
-by executing the same GoMatic command locally, changing the pipeline name and
-using your GoCD Server URL:
-
-```shell
-$ docker run -i --rm python:slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p PetClinic
-Collecting gomatic
-  Downloading gomatic-0.5.10.tar.gz
 ...
-```
 
-At the end of the execution, you can once again copy and paste the Python code
-into the `pipelines/pet_clinic_pipeline.py` script, and make the same tweaks:
-
-```python
-#!/usr/bin/env python
-from gomatic import *
-import os, re
-
-print "Updating PetClinic Pipeline..."
-go_server_host = re.search('https?://([a-z0-9.\-._~%]+)', os.environ['GO_SERVER_URL']).group(1)
-go_server_url = "%s:%s" % (go_server_host, "8153")
-configurator = GoCdConfigurator(HostRestClient(go_server_url))
-secret_variables = {'GCLOUD_SERVICE_KEY': 'lKD+DoKDGtCsaToW...'}
-pipeline = configurator\
-	.ensure_pipeline_group("defaultGroup")\
-	.ensure_replacement_of_pipeline("PetClinic")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*'])))
-stage = pipeline.ensure_stage("commit")
+stage = pipeline.ensure_stage("approve-canary")
+stage.set_has_manual_approval()
 job = stage\
-    .ensure_job("build-and-publish")\
-    .ensure_artifacts({TestArtifact("target/surefire-reports", "surefire-reports")})\
-    .ensure_environment_variables({'MAVEN_OPTS': '-Xmx1024m', 'GCLOUD_PROJECT_ID': 'devops-workshop-123'})\
-    .ensure_encrypted_environment_variables(secret_variables)
-job.set_elastic_profile_id('docker')
-job.add_task(ExecTask(['./mvnw', 'clean', 'package']))
-job.add_task(ExecTask(['bash', '-c', 'docker build --tag pet-app:$GO_PIPELINE_LABEL --build-arg JAR_FILE=target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar .']))
-job.add_task(ExecTask(['bash', '-c', 'docker login -u _json_key -p"$(echo $GCLOUD_SERVICE_KEY | base64 -d)" https://us.gcr.io']))
-job.add_task(ExecTask(['bash', '-c', 'docker tag pet-app:$GO_PIPELINE_LABEL us.gcr.io/$GCLOUD_PROJECT_ID/pet-app:$GO_PIPELINE_LABEL']))
-job.add_task(ExecTask(['bash', '-c', 'docker push us.gcr.io/$GCLOUD_PROJECT_ID/pet-app:$GO_PIPELINE_LABEL']))
-stage = pipeline.ensure_stage("deploy")
-job = stage\
-    .ensure_job("deploy")\
+	.ensure_job("complete-canary")\
     .ensure_environment_variables({'GCLOUD_ZONE': 'us-central1-a', 'GCLOUD_PROJECT_ID': 'devops-workshop-123', 'GCLOUD_CLUSTER': 'devops-workshop-gke'})\
     .ensure_encrypted_environment_variables(secret_variables)
 job.set_elastic_profile_id('docker-kubectl')
 job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > secret.json && chmod 600 secret.json']))
 job.add_task(ExecTask(['bash', '-c', 'gcloud auth activate-service-account --key-file secret.json']))
 job.add_task(ExecTask(['bash', '-c', 'gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --project $GCLOUD_PROJECT_ID']))
-job.add_task(ExecTask(['bash', '-c', './deploy.sh']))
+job.add_task(ExecTask(['bash', '-c', './complete-canary.sh']))
 job.add_task(ExecTask(['bash', '-c', 'rm secret.json']))
 
 configurator.save_updated_config()
 ```
 
-Please note that we once again added some code to parse the GoCD Server URL, set
-the Elastic Profile IDs for both jobs, and removed the arguments from the last
-line. We also added an extra line to the `build-and-publish` job to collect the
-test report artifacts from surefire. This allows us to test that the pipeline
-configuration is getting updated after the Meta pipeline executes.
-
-Once again, when you commit and push these changes, the "Meta" pipeline should
-trigger and reconfigure the PetClinic pipeline.
+Commit and push the changes to the pipeline definition and wait until GoCD is
+updated. Once the pipeline is updated with the new stage, go ahead and commit and
+push the other remaining changes to the kubernetes files and deployment scripts.
+This should trigger the "PetClinic" pipeline and you should see it deploy the
+new version as a canary release. Then you can test a manual approval to complete
+the release.
