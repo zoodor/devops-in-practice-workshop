@@ -1,150 +1,134 @@
-# Exercise 14 - Canary Release
+# Exercise 15 - Cleanup
 
 ## Goals
 
-* Learn about Canary Release
-* Learn about GoCD manual workflows
+* Ensure all cloud resources are disposed
 
 ## Acceptance Criteria
 
-* Create a `web-canary.yml` kubernetes definition to implement canary releases
-* Update the `deploy.sh` script to deploy the canary release only
-* Create a `complete-canary.sh` script to complete the canary release rollout
-* Extend the PetClinic pipeline (using GoMatic) to add a new stage with a manual
-approval to complete the canary release using the above scripts
+* Use terraform to teardown the GKE infrastructure
 
 ## Step by Step Instructions
 
-First, let's create a new `kubernetes/web-canary.yml` file with a deployment
-definition similar to the `kubernetes/web.yml` but with a new name and an extra
-label `track` with value `canary`:
-
-```yaml
-apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
-kind: Deployment
-metadata:
-  name: pet-web-canary
-  labels:
-    app: pet
-spec:
-  selector:
-    matchLabels:
-      app: pet
-      tier: frontend
-  strategy:
-    type: RollingUpdate
-  template:
-    metadata:
-      labels:
-        app: pet
-        tier: frontend
-        track: canary
-    spec:
-      containers:
-      - image: us.gcr.io/devops-workshop-201010/pet-app
-        imagePullPolicy: IfNotPresent
-        name: pet-web
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: mysql
-        - name: PET_DB_DATABASE
-          value: petclinic
-        - name: PET_DB_USER
-          value: petclinic-user
-        - name: PET_DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-pass
-              key: password
-        ports:
-        - containerPort: 8080
-          name: pet-web
-```
-
-Let's also update the `kubernetes/web.yml` definition to include the label
-`track` with value `stable`:
-
-```yaml
-...
-template:
-  metadata:
-    labels:
-      app: pet
-      tier: frontend
-      track: stable
-...
-```
-
-Now we can update our `deploy.sh` script to fetch the current version and keep
-it as the stable deploy, but use the new image as the canary release with a new
-deployment:
-
-```bash
-#!/usr/bin/env bash
-set -xe
-
-echo "Deploying pet-db..."
-kubectl apply -f kubernetes/mysql.yml --namespace default
-
-IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
-PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
-CURRENT_VERSION=$(kubectl get deployment pet-web --namespace default -o jsonpath="{..image}" | cut -d':' -f2)
-echo "Current version: $CURRENT_VERSION"
-echo "Deploying pet-web canary image version: $IMAGE_VERSION"
-
-cat kubernetes/web.yml | sed "s/\(image: \).*$/\1us.gcr.io\/$PROJECT_ID\/pet-app:$CURRENT_VERSION/" | kubectl apply -f - --namespace default
-cat kubernetes/web-canary.yml | sed "s/\(image: \).*$/\1us.gcr.io\/$PROJECT_ID\/pet-app:$IMAGE_VERSION/" | kubectl apply -f - --namespace default
-```
-
-Now let's create a new `complete-canary.sh` script that will be invoked manually
-from our pipeline, when we decide to complete the canary rollout:
-
-```bash
-#!/usr/bin/env bash
-set -xe
-
-echo "Completing canary release of pet-db..."
-
-IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
-PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
-CURRENT_VERSION=$(kubectl get deployment pet-web --namespace default -o jsonpath="{..image}" | cut -d':' -f2)
-echo "Updating pet-web deployment from version $CURRENT_VERSION to $IMAGE_VERSION"
-
-cat kubernetes/web.yml | sed "s/\(image: \).*$/\1us.gcr.io\/$PROJECT_ID\/pet-app:$IMAGE_VERSION/" | kubectl apply -f - --namespace default
-```
-
-Don't forget to make the script executable:
+Since all our infrastructure was deployed to GKE, we can use the `terraform destroy`
+command to cleanup everything and ensure we're not paying for unused cloud
+resources:
 
 ```shell
-$ chmod a+x complete-canary.sh
+$ terraform destroy terraform/
+google_container_cluster.cluster: Refreshing state... (ID: devops-workshop-gke)
+
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  - google_container_cluster.cluster
+
+
+Plan: 0 to add, 0 to change, 1 to destroy.
+
+Do you really want to destroy?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+google_container_cluster.cluster: Destroying... (ID: devops-workshop-gke)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 10s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 20s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 30s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 40s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 50s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m0s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m10s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m20s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m30s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m40s elapsed)
+google_container_cluster.cluster: Destruction complete after 1m42s
+
+Destroy complete! Resources: 1 destroyed.
 ```
 
-Finally, we can update our `pipelines/pet_clinic_pipeline.py` script to add a
-new manual stage and job to execute the `complete_canary.sh` script, after the
-definition of the `deploy` stage:
+Then, we can run the following script to cleanup all the unused `pet-app` images
+from Google Container Registry, replacing your Project ID in two occurrences:
 
-```python
-...
-
-stage = pipeline.ensure_stage("approve-canary")
-stage.set_has_manual_approval()
-job = stage\
-	.ensure_job("complete-canary")\
-    .ensure_environment_variables({'GCLOUD_ZONE': 'us-central1-a', 'GCLOUD_PROJECT_ID': 'devops-workshop-123', 'GCLOUD_CLUSTER': 'devops-workshop-gke'})\
-    .ensure_encrypted_environment_variables(secret_variables)
-job.set_elastic_profile_id('docker-kubectl')
-job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > secret.json && chmod 600 secret.json']))
-job.add_task(ExecTask(['bash', '-c', 'gcloud auth activate-service-account --key-file secret.json']))
-job.add_task(ExecTask(['bash', '-c', 'gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --project $GCLOUD_PROJECT_ID']))
-job.add_task(ExecTask(['bash', '-c', './complete-canary.sh']))
-job.add_task(ExecTask(['bash', '-c', 'rm secret.json']))
-
-configurator.save_updated_config()
+```shell
+$ for image in $(gcloud container images list-tags us.gcr.io/devops-workshop-123/pet-app --format='get(digest)'); do gcloud container images delete --force-delete-tags -q us.gcr.io/devops-workshop-123/pet-app@$image; done
+Digests:
+- us.gcr.io/devops-workshop-201010/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da
+  Associated tags:
+ - latest
+Deleted [us.gcr.io/devops-workshop-201010/pet-app:latest].
+Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da].
+Digests:
+- us.gcr.io/devops-workshop-201010/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf
+  Associated tags:
+ - 19
+Deleted [us.gcr.io/devops-workshop-201010/pet-app:19].
+Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf].
+Digests:
+- us.gcr.io/devops-workshop-201010/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c
+  Associated tags:
+ - 17
+Deleted [us.gcr.io/devops-workshop-201010/pet-app:17].
+Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c].
 ```
 
-Commit and push the changes to the pipeline definition and wait until GoCD is
-updated. Once the pipeline is updated with the new stage, go ahead and commit and
-push the other remaining changes to the kubernetes files and deployment scripts.
-This should trigger the "PetClinic" pipeline and you should see it deploy the
-new version as a canary release. Then you can test a manual approval to complete
-the release.
+Finally, we can delete the service account we created for the GoCD Agent, once
+again replacing with your Project ID:
+
+```shell
+$ gcloud iam service-accounts delete gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+You are about to delete service account
+[gocd-agent@devops-workshop-123.iam.gserviceaccount.com].
+
+Do you want to continue (Y/n)?  Y
+
+deleted service account [gocd-agent@devops-workshop-123.iam.gserviceaccount.com]
+$ gcloud projects remove-iam-policy-binding devops-workshop-123 --member serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com --role roles/storage.admin
+bindings:
+- members:
+  - serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+  role: roles/container.admin
+- members:
+  - serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+  role: roles/container.clusterAdmin
+- members:
+  - serviceAccount:service-190704809516@container-engine-robot.iam.gserviceaccount.com
+  role: roles/container.serviceAgent
+- members:
+  - serviceAccount:190704809516-compute@developer.gserviceaccount.com
+  - serviceAccount:190704809516@cloudservices.gserviceaccount.com
+  - serviceAccount:service-190704809516@containerregistry.iam.gserviceaccount.com
+  role: roles/editor
+- members:
+  - user:dtsato@gmail.com
+  role: roles/owner
+etag: BwVp2RX4cHA=
+version: 1
+$ gcloud projects remove-iam-policy-binding devops-workshop-123 --member serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com --role roles/container.admin
+bindings:
+- members:
+  - serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+  role: roles/container.clusterAdmin
+- members:
+  - serviceAccount:service-190704809516@container-engine-robot.iam.gserviceaccount.com
+  role: roles/container.serviceAgent
+- members:
+  - serviceAccount:190704809516-compute@developer.gserviceaccount.com
+  - serviceAccount:190704809516@cloudservices.gserviceaccount.com
+  - serviceAccount:service-190704809516@containerregistry.iam.gserviceaccount.com
+  role: roles/editor
+- members:
+  - user:dtsato@gmail.com
+  role: roles/owner
+etag: BwVp2RgXCis=
+version: 1
+```
+
+These steps will destroy all resources we created during the workshop, but if
+you want to also shut down your entire GCP "Devops Workshop" project, you can do
+so through the Management Console, but going to the "IAM & admin" service,
+choosing the "Settings" menu and clicking on "SHUT DOWN" button.
