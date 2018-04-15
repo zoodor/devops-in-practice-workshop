@@ -90,7 +90,7 @@ configuration as code, so we can run this command locally, replacing the IP
 address with your GoCD Server public IP from GKE:
 
 ```shell
-$ docker run -i --rm python:slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
+$ docker run -i --rm python:2.7-slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
 Collecting gomatic
   Downloading gomatic-0.5.10.tar.gz
 ...
@@ -137,7 +137,7 @@ by executing the same GoMatic command locally, changing the pipeline name and
 using your GoCD Server URL:
 
 ```shell
-$ docker run -i --rm python:slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p PetClinic
+$ docker run -i --rm python:2.7-slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p PetClinic
 Collecting gomatic
   Downloading gomatic-0.5.10.tar.gz
 ...
