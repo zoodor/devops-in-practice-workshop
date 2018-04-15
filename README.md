@@ -19,7 +19,7 @@ be time-consuming and risky given unreliable wifi connectivity.
 ### Workstation setup
 
 1. Install Maven
-2. Install docker
+2. Install Docker
 3. Install kubectl
 4. Install VirtualBox
 5. Install minikube
@@ -39,6 +39,18 @@ make sure the following APIs are enabled for your project:
 1. [Google Compute Engine API](https://console.cloud.google.com/apis/api/compute.googleapis.com/overview)
 2. [Google Container Engine API](https://console.cloud.google.com/apis/api/container.googleapis.com/overview)
 3. [Google Container Registry API](https://console.cloud.google.com/apis/api/containerregistry.googleapis.com/overview)
+
+### Download large files
+
+I recommend you download the following Docker images prior to the workshop by
+running the `docker pull <IMAGE>` command:
+
+* `openjdk:8-jdk-alpine`
+* `mysql:5.7`
+* `python:2.7-slim`
+
+You can also follow the `INSTRUCTIONS.md` for step 0 to have Maven download all
+dependencies when running `./mvnw clean install`
 
 # License
 
