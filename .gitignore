@@ -13,3 +13,5 @@ target/*
 !.vscode/extensions.json
 _site/
 data/
+terraform.tfstate*
+.terraform/
