@@ -116,7 +116,7 @@ pipeline = configurator\
 	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*']), invert_filter='true'))
 stage = pipeline.ensure_stage("update-pipelines")
 job = stage.ensure_job("update-pipelines")
-job.set_elastic_profile_id('docker').add_task(ExecTask(['pipelines/update.sh']))
+job.set_elastic_profile_id('docker-jdk').add_task(ExecTask(['pipelines/update.sh']))
 
 configurator.save_updated_config()
 ```
@@ -166,7 +166,7 @@ job = stage\
     .ensure_artifacts({TestArtifact("target/surefire-reports", "surefire-reports")})\
     .ensure_environment_variables({'MAVEN_OPTS': '-Xmx1024m', 'GCLOUD_PROJECT_ID': 'devops-workshop-123'})\
     .ensure_encrypted_environment_variables(secret_variables)
-job.set_elastic_profile_id('docker')
+job.set_elastic_profile_id('docker-jdk')
 job.add_task(ExecTask(['./mvnw', 'clean', 'package']))
 job.add_task(ExecTask(['bash', '-c', 'docker build --tag pet-app:$GO_PIPELINE_LABEL --build-arg JAR_FILE=target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar .']))
 job.add_task(ExecTask(['bash', '-c', 'docker login -u _json_key -p"$(echo $GCLOUD_SERVICE_KEY | base64 -d)" https://us.gcr.io']))
