@@ -6,7 +6,7 @@ kubectl apply -f kubernetes/mysql.yml --namespace default
 
 IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
 PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
-CURRENT_VERSION=$(kubectl get deployment pet-web -o jsonpath="{..image}" | cut -d':' -f2)
+CURRENT_VERSION=$(kubectl get deployment pet-web --namespace default -o jsonpath="{..image}" | cut -d':' -f2)
 echo "Current version: $CURRENT_VERSION"
 echo "Deploying pet-web canary image version: $IMAGE_VERSION"
 
