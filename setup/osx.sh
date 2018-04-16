@@ -18,6 +18,13 @@ brew update
 
 brew tap caskroom/cask
 
+if hash git 2>/dev/null; then
+  echo "Git is already installed!"
+else
+  echo "Installing Git..."
+  brew install git
+fi
+
 if hash VBoxManage 2>/dev/null; then
   echo "VirtualBox is already installed!"
 else
