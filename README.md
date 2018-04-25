@@ -50,7 +50,7 @@ running the `docker pull <IMAGE>` command:
 
 * `docker pull openjdk:8-jdk-alpine`
 * `docker pull mysql:5.7`
-* `docker pull python:2.7-slim`
+* `docker pull dtsato/gomatic`
 
 You can also follow the `INSTRUCTIONS.md` for step 0 to have Maven download all
 dependencies by running `./mvnw clean install`.
