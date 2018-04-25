@@ -1,66 +1,134 @@
-# Exercise 0 - Building and Running Locally
+# Exercise 15 - Cleanup
 
 ## Goals
 
-* Build and package the sample application using Maven
-* Run the application on your local workstation
-* Familiarize yourself with the user interface / features:
-  * Create an Owner
-  * Add a Pet
-  * Browse Veterinarians
-  * Find the Owner you created
+* Ensure all cloud resources are disposed
 
 ## Acceptance Criteria
 
-* Application is running on http://localhost:8080
-* New Owner is created, with at least 1 pet
+* Use terraform to teardown the GKE infrastructure
 
 ## Step by Step Instructions
 
-We will use the Maven wrapper to build the project, running either the `package`
-or `install` target from the root of the project:
+Since all our infrastructure was deployed to GKE, we can use the `terraform destroy`
+command to cleanup everything and ensure we're not paying for unused cloud
+resources:
 
 ```shell
-$ ./mvnw clean install
-Downloading https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.3.3/apache-maven-3.3.3-bin.zip
-........................................................................................................................................................................................................................................................................................................................................................................................................................
-Unzipping /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.3-bin/3opbjp6rgl6qp7k2a6tljcpvgp/apache-maven-3.3.3-bin.zip to /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.3-bin/3opbjp6rgl6qp7k2a6tljcpvgp
-Set executable permissions for: /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.3-bin/3opbjp6rgl6qp7k2a6tljcpvgp/apache-maven-3.3.3/bin/mvn
-[INFO] Scanning for projects...
-[INFO]                                                                         
-[INFO] ------------------------------------------------------------------------
-[INFO] Building petclinic 2.0.0.BUILD-SNAPSHOT
-[INFO] ------------------------------------------------------------------------
-[INFO]
+$ terraform destroy terraform/
+google_container_cluster.cluster: Refreshing state... (ID: devops-workshop-gke)
 
-(...)
+An execution plan has been generated and is shown below.
+Resource actions are indicated with the following symbols:
+  - destroy
 
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time: 01:23 min
-[INFO] Finished at: 2018-04-05T13:32:24+01:00
-[INFO] Final Memory: 103M/933M
-[INFO] ------------------------------------------------------------------------
+Terraform will perform the following actions:
+
+  - google_container_cluster.cluster
+
+
+Plan: 0 to add, 0 to change, 1 to destroy.
+
+Do you really want to destroy?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+google_container_cluster.cluster: Destroying... (ID: devops-workshop-gke)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 10s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 20s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 30s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 40s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 50s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m0s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m10s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m20s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m30s elapsed)
+google_container_cluster.cluster: Still destroying... (ID: devops-workshop-gke, 1m40s elapsed)
+google_container_cluster.cluster: Destruction complete after 1m42s
+
+Destroy complete! Resources: 1 destroyed.
 ```
 
-Once the project is built, you can run the Spring Boot Maven plugin with `./mvnw spring-boot:run`. Example:
+Then, we can run the following script to cleanup all the unused `pet-app` images
+from Google Container Registry, replacing your Project ID in two occurrences:
 
 ```shell
-$ ./mvnw spring-boot:run
-[INFO] Scanning for projects...
-[INFO]                                                                         
-[INFO] ------------------------------------------------------------------------
-[INFO] Building petclinic 2.0.0.BUILD-SNAPSHOT
-[INFO] ------------------------------------------------------------------------
-[INFO]
-[INFO] >>> spring-boot-maven-plugin:2.0.0.RELEASE:run (default-cli) > test-compile @ spring-petclinic >>>
-
-(...)
-
-2018-04-05 13:34:44.322  INFO 57532 --- [  restartedMain] o.s.j.e.a.AnnotationMBeanExporter        : Located MBean 'dataSource': registering with JMX server as MBean [com.zaxxer.hikari:name=dataSource,type=HikariDataSource]
-2018-04-05 13:34:44.427  INFO 57532 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
-2018-04-05 13:34:44.431  INFO 57532 --- [  restartedMain] o.s.s.petclinic.PetClinicApplication     : Started PetClinicApplication in 12.261 seconds (JVM running for 13.44)
+$ for image in $(gcloud container images list-tags us.gcr.io/devops-workshop-123/pet-app --format='get(digest)'); do gcloud container images delete --force-delete-tags -q us.gcr.io/devops-workshop-123/pet-app@$image; done
+Digests:
+- us.gcr.io/devops-workshop-201010/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da
+  Associated tags:
+ - latest
+Deleted [us.gcr.io/devops-workshop-201010/pet-app:latest].
+Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da].
+Digests:
+- us.gcr.io/devops-workshop-201010/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf
+  Associated tags:
+ - 19
+Deleted [us.gcr.io/devops-workshop-201010/pet-app:19].
+Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf].
+Digests:
+- us.gcr.io/devops-workshop-201010/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c
+  Associated tags:
+ - 17
+Deleted [us.gcr.io/devops-workshop-201010/pet-app:17].
+Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c].
 ```
 
-Then you should be able to access the application by going to http://localhost:8080.
+Finally, we can delete the service account we created for the GoCD Agent, once
+again replacing with your Project ID:
+
+```shell
+$ gcloud iam service-accounts delete gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+You are about to delete service account
+[gocd-agent@devops-workshop-123.iam.gserviceaccount.com].
+
+Do you want to continue (Y/n)?  Y
+
+deleted service account [gocd-agent@devops-workshop-123.iam.gserviceaccount.com]
+$ gcloud projects remove-iam-policy-binding devops-workshop-123 --member serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com --role roles/storage.admin
+bindings:
+- members:
+  - serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+  role: roles/container.admin
+- members:
+  - serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+  role: roles/container.clusterAdmin
+- members:
+  - serviceAccount:service-190704809516@container-engine-robot.iam.gserviceaccount.com
+  role: roles/container.serviceAgent
+- members:
+  - serviceAccount:190704809516-compute@developer.gserviceaccount.com
+  - serviceAccount:190704809516@cloudservices.gserviceaccount.com
+  - serviceAccount:service-190704809516@containerregistry.iam.gserviceaccount.com
+  role: roles/editor
+- members:
+  - user:dtsato@gmail.com
+  role: roles/owner
+etag: BwVp2RX4cHA=
+version: 1
+$ gcloud projects remove-iam-policy-binding devops-workshop-123 --member serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com --role roles/container.admin
+bindings:
+- members:
+  - serviceAccount:gocd-agent@devops-workshop-123.iam.gserviceaccount.com
+  role: roles/container.clusterAdmin
+- members:
+  - serviceAccount:service-190704809516@container-engine-robot.iam.gserviceaccount.com
+  role: roles/container.serviceAgent
+- members:
+  - serviceAccount:190704809516-compute@developer.gserviceaccount.com
+  - serviceAccount:190704809516@cloudservices.gserviceaccount.com
+  - serviceAccount:service-190704809516@containerregistry.iam.gserviceaccount.com
+  role: roles/editor
+- members:
+  - user:dtsato@gmail.com
+  role: roles/owner
+etag: BwVp2RgXCis=
+version: 1
+```
+
+These steps will destroy all resources we created during the workshop, but if
+you want to also shut down your entire GCP "Devops Workshop" project, you can do
+so through the Management Console, but going to the "IAM & admin" service,
+choosing the "Settings" menu and clicking on "SHUT DOWN" button.
