@@ -23,9 +23,7 @@ or `install` target from the root of the project:
 ```shell
 $ ./mvnw clean install
 Downloading https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.3.3/apache-maven-3.3.3-bin.zip
-........................................................................................................................................................................................................................................................................................................................................................................................................................
-Unzipping /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.3-bin/3opbjp6rgl6qp7k2a6tljcpvgp/apache-maven-3.3.3-bin.zip to /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.3-bin/3opbjp6rgl6qp7k2a6tljcpvgp
-Set executable permissions for: /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.3-bin/3opbjp6rgl6qp7k2a6tljcpvgp/apache-maven-3.3.3/bin/mvn
+................................................................................
 [INFO] Scanning for projects...
 [INFO]                                                                         
 [INFO] ------------------------------------------------------------------------
@@ -44,7 +42,8 @@ Set executable permissions for: /Users/dsato/.m2/wrapper/dists/apache-maven-3.3.
 [INFO] ------------------------------------------------------------------------
 ```
 
-Once the project is built, you can run the Spring Boot Maven plugin with `./mvnw spring-boot:run`. Example:
+Once the project is built, you can run the Spring Boot Maven plugin with
+`./mvnw spring-boot:run`. Example:
 
 ```shell
 $ ./mvnw spring-boot:run
