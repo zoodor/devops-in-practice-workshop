@@ -4,9 +4,9 @@ services:
   pet-app:
     build:
       context: .
-      image: pet-app
       args:
         JAR_FILE: "./target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar"
+    image: pet-app
     ports:
       - "8080:8080"
     links:
