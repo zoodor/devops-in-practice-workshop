@@ -30,7 +30,6 @@ database=mysql
 spring.datasource.url=jdbc:mysql://${PET_DB_SERVICE_HOST}:${PET_DB_SERVICE_PORT}/${PET_DB_DATABASE}
 spring.datasource.username=${PET_DB_USER}
 spring.datasource.password=${PET_DB_PASSWORD}
-# Uncomment this the first time the app runs
 spring.datasource.initialization-mode=always
 ```
 
@@ -143,7 +142,7 @@ Successfully built 2e68f5165a1e
 Successfully tagged pet-app:latest
 ```
 
-Check that the image was published to minikube's Docker:
+Check that the image was published to Minikube's Docker:
 
 ```shell
 $ docker image ls pet*
@@ -177,7 +176,6 @@ Validate that the objects are created successfully:
 
 ```shell
 $ kubectl get pods
-NAME                         READY     STATUS    RESTARTS   AGE
 NAME                       READY     STATUS    RESTARTS   AGE
 pet-db-7997cf844-lsppt     1/1       Running   0          1h
 pet-web-59cd5678b8-p7thk   1/1       Running   0          1h

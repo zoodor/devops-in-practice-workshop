@@ -20,8 +20,8 @@ them into pipeline scripts
 
 ### Creating placeholder scripts
 
-First, let's create the folder and a few dummy scripts for each of the pipelines,
-to serve as placeholder test scripts:
+First, let's create the folder and a few dummy scripts for each of the
+pipelines, to serve as placeholder test scripts:
 
 ```shell
 $ mkdir pipelines
@@ -71,16 +71,17 @@ click "NEXT". Then on the next step, use the following configuration:
 * Blacklist: `pipelines/*`
 * Invert the file filter: Checked
 
-Once again, you can test by clicking on "CHECK CONNECTION" before proceeding with
-clicking "NEXT". In the final step, use the following configuration:
+Once again, you can test by clicking on "CHECK CONNECTION" before proceeding
+with clicking "NEXT". In the final step, use the following configuration:
 
 * Stage Name: `update-pipelines`
 * Job Name: `update-pipelines`
 * Task Type: `More...`
 * Command: `pipelines/update.sh`
 
-We can then click on "FINISH". We can now unpause the pipeline and test that it
-runs successfully.
+We can then click on "FINISH". Going back to the "Job Settings" tab, we can add
+the `docker-jdk` Elastic Profile Id to ensure the agent will run. We can now
+un-pause the pipeline and test that it runs successfully.
 
 ### Pipeline as code for Meta pipeline
 
@@ -90,9 +91,9 @@ configuration as code, so we can run this command locally, replacing the IP
 address with your GoCD Server public IP from GKE:
 
 ```shell
-$ docker run -i --rm python:2.7-slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
-Collecting gomatic
-  Downloading gomatic-0.5.10.tar.gz
+$ docker run -i --rm dtsato/gomatic python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
+#!/usr/bin/env python
+from gomatic import *
 ...
 ```
 
@@ -113,19 +114,17 @@ configurator = GoCdConfigurator(HostRestClient(go_server_url))
 pipeline = configurator\
 	.ensure_pipeline_group("defaultGroup")\
 	.ensure_replacement_of_pipeline("Meta")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*']), invert_filter='true'))
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*']), invert_filter="True"))
 stage = pipeline.ensure_stage("update-pipelines")
-job = stage.ensure_job("update-pipelines")
-job.set_elastic_profile_id('docker-jdk').add_task(ExecTask(['pipelines/update.sh']))
+job = stage.ensure_job("update-pipelines").set_elastic_profile_id('docker-jdk')
+job.add_task(ExecTask(['pipelines/update.sh']))
 
 configurator.save_updated_config()
 ```
 
-We are adding some code to parse the GoCD Server URL from the environment variable
-and on the last two lines, we added a config to set the Elastic Profile Id and
-removed the named arguments to actually save the configuration, and not just do
-a dry-run. We also change the `GitMaterial` config to include the `invert_filter='true'`
-that was missing.
+We are adding some code to parse the GoCD Server URL from the environment
+variable and removed the named arguments from the last line to actually save the
+configuration, and not just do a dry-run.
 
 Once you commit and push this code, the Meta pipeline should trigger again, and
 this time the above code will invoke GoMatic.
@@ -137,9 +136,9 @@ by executing the same GoMatic command locally, changing the pipeline name and
 using your GoCD Server URL:
 
 ```shell
-$ docker run -i --rm python:2.7-slim pip install gomatic && python -m gomatic.go_cd_configurator -s 35.190.56.218 -p PetClinic
-Collecting gomatic
-  Downloading gomatic-0.5.10.tar.gz
+$ docker run -i --rm dtsato/gomatic python -m gomatic.go_cd_configurator -s 35.190.56.218 -p PetClinic
+#!/usr/bin/env python
+from gomatic import *
 ...
 ```
 

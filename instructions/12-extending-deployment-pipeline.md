@@ -15,10 +15,11 @@ job that will configure `kubectl` to authenticate to GKE and execute the
 
 ## Step by Step Instructions
 
-First, let's update our `deploy.sh` script to deploy to the default namespace and
-overwrite the docker image spec when the `$GO_PIPELINE_LABEL` environment
+First, let's update our `deploy.sh` script to deploy to the default namespace
+and overwrite the docker image spec when the `$GO_PIPELINE_LABEL` environment
 variable is present. We will also use the `$GCLOUD_PROJECT_ID` variable when
-present (you can change the default value to match your Project ID when running locally):
+present (you can change the default value to match your Project ID when running
+locally):
 
 ```bash
 #!/usr/bin/env bash
@@ -56,8 +57,8 @@ with the following configuration:
 
 Once the profile is saved, we can configure the new stage of our pipeline, by
 going to the "ADMIN" menu, clicking "Pipelines", and opening the "PetClinic"
-pipeline. Opening the "Stages" tab, we can create the new stage with the following
-configuration:
+pipeline. Opening the "Stages" tab, we can create the new stage with the
+following configuration (again adding a line break after the `-c` argument):
 
 * Stage name: `deploy`
 * Initial job name: `deploy`
@@ -98,5 +99,5 @@ Now, when you commit and push your changes to the `deploy.sh` script, GoCD will
 pick up the change in the Git repository and trigger a new run of the pipeline,
 which should succeed both the `commit` and `deploy` stage. If you want to verify
 that the changes are applied to the application, you can include in your commit
-a change to the web UI as well, in order to verify that the change was propagated
-all the way to production.
+a change to the web UI as well, in order to verify that the change was
+propagated all the way to production.
