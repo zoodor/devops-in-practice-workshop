@@ -17,6 +17,7 @@ echo "Updating Homebrew..."
 brew update
 
 brew tap caskroom/cask
+brew tap caskroom/versions
 
 if hash git 2>/dev/null; then
   echo "Git is already installed!"
