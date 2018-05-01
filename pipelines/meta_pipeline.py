@@ -8,11 +8,11 @@ go_server_host = re.search('https?://([a-z0-9.\-._~%]+)', os.environ['GO_SERVER_
 go_server_url = "%s:%s" % (go_server_host, "8153")
 configurator = GoCdConfigurator(HostRestClient(go_server_url))
 pipeline = configurator\
-	.ensure_pipeline_group("defaultGroup")\
+	.ensure_pipeline_group("sample")\
 	.ensure_replacement_of_pipeline("Meta")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="step-14", ignore_patterns=set(['pipelines/*']), invert_filter='true'))
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="step-14", ignore_patterns=set(['pipelines/*']), invert_filter="True"))
 stage = pipeline.ensure_stage("update-pipelines")
 job = stage.ensure_job("update-pipelines")
-job.set_elastic_profile_id('docker').add_task(ExecTask(['pipelines/update.sh']))
+job.set_elastic_profile_id('docker-jdk').add_task(ExecTask(['pipelines/update.sh']))
 
 configurator.save_updated_config()
