@@ -10,9 +10,9 @@
 
 ## Step by Step Instructions
 
-Since all our infrastructure was deployed to GKE, we can use the `terraform destroy`
-command to cleanup everything and ensure we're not paying for unused cloud
-resources:
+Since all our infrastructure was deployed to GKE, we can use the `terraform
+destroy` command to cleanup everything and ensure we're not paying for unused
+cloud resources:
 
 ```shell
 $ terraform destroy terraform/

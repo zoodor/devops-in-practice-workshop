@@ -39,7 +39,7 @@ set -xe
 
 CWD=$(cd $(dirname $0) && pwd)
 for pipeline in $CWD/*.py; do
-  docker run -i --rm -v "$CWD":/usr/src/meta -w /usr/src/meta -e GO_SERVER_URL=$GO_SERVER_URL python:2.7-slim /bin/bash -c "pip install gomatic && python $(basename $pipeline)"
+  docker run -i --rm -v "$CWD":/usr/src/meta -w /usr/src/meta -e GO_SERVER_URL=$GO_SERVER_URL dtsato/gomatic /bin/bash -c "python $(basename $pipeline)"
 done
 ```
 
@@ -112,7 +112,7 @@ go_server_host = re.search('https?://([a-z0-9.\-._~%]+)', os.environ['GO_SERVER_
 go_server_url = "%s:%s" % (go_server_host, "8153")
 configurator = GoCdConfigurator(HostRestClient(go_server_url))
 pipeline = configurator\
-	.ensure_pipeline_group("defaultGroup")\
+	.ensure_pipeline_group("sample")\
 	.ensure_replacement_of_pipeline("Meta")\
 	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*']), invert_filter="True"))
 stage = pipeline.ensure_stage("update-pipelines")
@@ -156,7 +156,7 @@ go_server_url = "%s:%s" % (go_server_host, "8153")
 configurator = GoCdConfigurator(HostRestClient(go_server_url))
 secret_variables = {'GCLOUD_SERVICE_KEY': 'lKD+DoKDGtCsaToW...'}
 pipeline = configurator\
-	.ensure_pipeline_group("defaultGroup")\
+	.ensure_pipeline_group("sample")\
 	.ensure_replacement_of_pipeline("PetClinic")\
 	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="master", ignore_patterns=set(['pipelines/*'])))
 stage = pipeline.ensure_stage("commit")
