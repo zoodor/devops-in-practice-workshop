@@ -59,6 +59,16 @@ spec:
         ports:
         - containerPort: 8080
           name: pet-web
+        livenessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
 ```
 
 Let's also update the `kubernetes/web.yml` definition to include the label
