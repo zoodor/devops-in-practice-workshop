@@ -10,7 +10,7 @@ secret_variables = {'GCLOUD_SERVICE_KEY': 'TWgSaA7B1TuHI317Ydpu1VgdmxF6/B/tvBORo
 pipeline = configurator\
 	.ensure_pipeline_group("sample")\
 	.ensure_replacement_of_pipeline("PetClinic")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="step-14", ignore_patterns=set(['pipelines/*'])))
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="final-solution", ignore_patterns=set(['pipelines/*'])))
 stage = pipeline.ensure_stage("commit")
 job = stage\
     .ensure_job("build-and-publish")\
