@@ -2,7 +2,7 @@
 
 ## Goals
 
-* Learn about Kubernetes concepts: rolling updates
+* Learn about Kubernetes concepts: rolling updates, readiness and liveness probes
 * Use Docker tags to version artifacts
 
 ## Acceptance Criteria
@@ -73,7 +73,8 @@ pet-app             latest              1e84b0d0f8b1        36 hours ago        
 ```
 
 Now, let's update the deployment section on our `kubernetes/web.yml` definition
-file to use rolling update strategy and reference the image with the new tag:
+file to use rolling update strategy, reference the image with the new tag, and
+configure liveness and readiness probes:
 
 ```yaml
 ...
@@ -94,8 +95,32 @@ spec:
       containers:
       - image: pet-app:step-7
         imagePullPolicy: Never
-
-...
+        name: pet-web
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: mysql
+        - name: PET_DB_DATABASE
+          value: petclinic
+        - name: PET_DB_USER
+          value: petclinic-user
+        - name: PET_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 8080
+          name: pet-web
+        livenessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
 ```
 
 Re-deploy and verify that the pods are updated to the new version on a rolling
@@ -112,15 +137,13 @@ service "pet-web" unchanged
 deployment "pet-web" configured
 $ kubectl rollout status deployment pet-web
 Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
-$ kubectl get pod
-NAME                       READY     STATUS              RESTARTS   AGE
-pet-db-7997cf844-d584n     1/1       Running             2          1d
-pet-web-6cdf7fcdff-bpxdt   1/1       Running             0          1m
-pet-web-6cdf7fcdff-fx5b9   1/1       Running             0          1m
-pet-web-6cdf7fcdff-vv9pc   1/1       Terminating         0          1m
-pet-web-8c8d8769c-8b66p    1/1       Running             0          13s
-pet-web-8c8d8769c-9xd5c    0/1       ContainerCreating   0          5s
-$ kubectl rollout status deployment pet-web
+Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for rollout to finish: 1 old replicas are pending termination...
+Waiting for rollout to finish: 1 old replicas are pending termination...
+Waiting for rollout to finish: 1 old replicas are pending termination...
 deployment "pet-web" successfully rolled out
 $ kubectl get pod
 NAME                       READY     STATUS        RESTARTS   AGE
@@ -138,8 +161,9 @@ pet-web-6cdf7fcdff   0         0         0         1d
 pet-web-8c8d8769c    3         3         3         10m
 ```
 
-Get the service URL and open it in your browser (in this case http://192.168.99.100:30596)
-to open the PetClinic application and make sure the welcome message is updated:
+Get the service URL and open it in your browser (in this case
+http://192.168.99.100:30596) to open the PetClinic application and make sure the
+welcome message is updated:
 
 ```shell
 $ minikube service pet-web --url

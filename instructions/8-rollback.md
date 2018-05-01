@@ -6,7 +6,7 @@
 
 ## Acceptance Criteria
 
-* Use the `kubectl` tool to rollback the `pet-web` deployment to the previous version
+* Use the `kubectl` tool to rollback the `pet-web` deployment to previous version
 * Cleanup resources in minikube cluster
 
 ## Step by Step Instructions
@@ -17,10 +17,10 @@ Let's first check the revisions of the `pet-web` deployment:
 $ kubectl rollout history deployment pet-web
 deployments "pet-web"
 REVISION  CHANGE-CAUSE
-3         <none>
-4         <none>
-$ kubectl rollout history deployment pet-web --revision=3
-deployments "pet-web" with revision #3
+1         <none>
+2         <none>
+$ kubectl rollout history deployment pet-web --revision=1
+deployments "pet-web" with revision #1
 Pod Template:
   Labels:	app=pet
 	pod-template-hash=2789397899
@@ -36,8 +36,8 @@ Pod Template:
       PET_DB_PASSWORD:	<set to the key 'password' in secret 'mysql-pass'>	Optional: false
     Mounts:	<none>
   Volumes:	<none>
-$ kubectl rollout history deployment pet-web --revision=4
-  deployments "pet-web" with revision #4
+$ kubectl rollout history deployment pet-web --revision=2
+  deployments "pet-web" with revision #2
   Pod Template:
     Labels:	app=pet
   	pod-template-hash=474843257
@@ -55,19 +55,19 @@ $ kubectl rollout history deployment pet-web --revision=4
     Volumes:	<none>
 ```
 
-You can see revision 4 has the tagged image, while revision 3 has the untagged image. Let's
-rollback to the previous untagged version:
+You can see revision 2 has the tagged image, while revision 1 has the untagged
+image. Let's rollback to the previous untagged version:
 
 ```shell
 $ kubectl rollout undo deployment pet-web
-deployment "pet-web"
+deployment.apps "pet-web"
 ```
 
 Refresh the page in your browser to test the application was rolled back and the
 welcome message reverted to the previous "Welcome" message.
 
-Once everything is tested, let's cleanup our minikube resources, using the `kubectl delete`
-command:
+Once everything is tested, let's cleanup our minikube resources, using the
+`kubectl delete` command:
 
 ```shell
 $ kubectl delete -f kubernetes/web.yml -f kubernetes/mysql.yml

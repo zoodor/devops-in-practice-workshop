@@ -41,7 +41,7 @@ spec:
         track: canary
     spec:
       containers:
-      - image: us.gcr.io/devops-workshop-201010/pet-app
+      - image: us.gcr.io/devops-workshop-123/pet-app
         imagePullPolicy: IfNotPresent
         name: pet-web
         env:
@@ -87,7 +87,7 @@ echo "Deploying pet-db..."
 kubectl apply -f kubernetes/mysql.yml --namespace default
 
 IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
-PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
+PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-123}
 CURRENT_VERSION=$(kubectl get deployment pet-web --namespace default -o jsonpath="{..image}" | cut -d':' -f2)
 echo "Current version: $CURRENT_VERSION"
 echo "Deploying pet-web canary image version: $IMAGE_VERSION"
@@ -106,7 +106,7 @@ set -xe
 echo "Completing canary release of pet-db..."
 
 IMAGE_VERSION=${GO_PIPELINE_LABEL:-latest}
-PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-201010}
+PROJECT_ID=${GCLOUD_PROJECT_ID:-devops-workshop-123}
 CURRENT_VERSION=$(kubectl get deployment pet-web --namespace default -o jsonpath="{..image}" | cut -d':' -f2)
 echo "Updating pet-web deployment from version $CURRENT_VERSION to $IMAGE_VERSION"
 
@@ -132,7 +132,7 @@ job = stage\
 	.ensure_job("complete-canary")\
     .ensure_environment_variables({'GCLOUD_ZONE': 'us-central1-a', 'GCLOUD_PROJECT_ID': 'devops-workshop-123', 'GCLOUD_CLUSTER': 'devops-workshop-gke'})\
     .ensure_encrypted_environment_variables(secret_variables)
-job.set_elastic_profile_id('docker-kubectl')
+job.set_elastic_profile_id('kubectl')
 job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > secret.json && chmod 600 secret.json']))
 job.add_task(ExecTask(['bash', '-c', 'gcloud auth activate-service-account --key-file secret.json']))
 job.add_task(ExecTask(['bash', '-c', 'gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --project $GCLOUD_PROJECT_ID']))

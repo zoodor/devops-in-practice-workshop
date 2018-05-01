@@ -36,6 +36,13 @@ Do you want to continue (Y/n)?  Y
 Docker configuration file updated.
 ```
 
+Since we stopped our local minikube cluster, we can reconfigure Docker to use
+our local Docker host, by running:
+
+```shell
+$ unset $(env | grep DOCKER_ | cut -d'=' -f1)
+```
+
 Now we can tag and push our local `pet-web` Docker image to GCR in the US region
 using the `docker tag` and `docker push` commands. Don't forget to replace the
 value of the project ID with your own:
@@ -51,7 +58,8 @@ cd7100a72410: Layer already exists
 latest: digest: sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da size: 1159
 ```
 
-Now we can test that the docker image was published to GCR using the `gcloud` command:
+Now we can test that the docker image was published to Google Container Registry
+using the `gcloud` command:
 
 ```shell
 $ gcloud container images list-tags us.gcr.io/devops-workshop-123/pet-app
@@ -70,9 +78,10 @@ default-token-z9bfd   kubernetes.io/service-account-token   3         23m
 mysql-pass            Opaque                                1         9s
 ```
 
-Before we can re-deploy, we need to make a few updates to our Kubernetes definition
-files to run on GKE. First, let's add an argument to ignore the `lost+found` dir
-in the container spec for the MySQL pod definition under `kubernetes/mysql.yml`:
+Before we can re-deploy, we need to make a few updates to our Kubernetes
+definition files to run on GKE. First, let's add an argument to ignore the
+`lost+found` dir in the container spec for the MySQL pod definition under
+`kubernetes/mysql.yml`:
 
 ```yaml
 ...
@@ -94,7 +103,7 @@ configuration:
 ...
 spec:
   containers:
-  - image: us.gcr.io/devops-workshop-201010/pet-app
+  - image: us.gcr.io/devops-workshop-123/pet-app
     imagePullPolicy: IfNotPresent
     name: pet-web
 ...
@@ -113,8 +122,8 @@ service "pet-web" created
 deployment "pet-web" created
 ```
 
-Once the deployment is complete we can test that the Kubernetes pods and services
-are available:
+Once the deployment is complete we can test that the Kubernetes pods and
+services are available:
 
 ```shell
 $ kubectl get pods

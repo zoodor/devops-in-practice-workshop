@@ -12,13 +12,14 @@
 
 * Initialize helm to deploy charts to our GKE cluster
 * Install and configure GoCD chart to use elastic agents
-* Create the "PetClinic" pipeline, with a single "commit" stage containing a single
-"build-and-publish" job that will compile, test, package the `jar`, build a docker
-image, and publish it to GCR
+* Create the "PetClinic" pipeline, with a single "commit" stage containing a
+single "build-and-publish" job that will compile, test, package the `jar`, build
+a docker image, and publish it to GCR
 
 ## Step by Step Instructions
 
-First, let's initialize Helm using `helm init` command, and update the repository:
+First, let's initialize Helm using `helm init`, and update the repository using
+`helm repo update`:
 
 ```shell
 $ helm init
@@ -40,10 +41,14 @@ Now let's search for the GoCD chart and find out details about it using the
 `helm search` and `helm inspect` commands:
 
 ```shell
-$ helm search gocd
+$ helm search -l gocd
 NAME       	CHART VERSION	APP VERSION	DESCRIPTION                                       
+stable/gocd	1.0.6        	18.3.0     	GoCD is an open-source continuous delivery serv...
+stable/gocd	1.0.5        	18.2.0     	GoCD is an open-source continuous delivery serv...
 stable/gocd	1.0.4        	18.2.0     	GoCD is an open-source continuous delivery serv...
-$ helm inspect stable/gocd
+
+...
+$ helm inspect stable/gocd --version 1.0.5
 appVersion: 18.2.0
 description: GoCD is an open-source continuous delivery server to model and visualize
   complex workflows with ease.
@@ -67,7 +72,7 @@ Now we can install the GoCD chart on a `gocd` namespace by running the `helm ins
 command:
 
 ```shell
-$ helm install --name gocd-app --namespace gocd --version 1.0.4 stable/gocd
+$ helm install --name gocd-app --namespace gocd --version 1.0.5 stable/gocd
 NAME:   gocd-app
 LAST DEPLOYED: Fri Apr 13 17:24:16 2018
 NAMESPACE: gocd
@@ -78,71 +83,11 @@ RESOURCES:
 NAME      SECRETS  AGE
 gocd-app  1        1s
 
-==> v1beta1/ClusterRoleBinding
-NAME      AGE
-gocd-app  1s
-
-==> v1/ConfigMap
-NAME            DATA  AGE
-gocd-app-tests  1     1s
-
-==> v1/PersistentVolumeClaim
-NAME             STATUS   VOLUME    CAPACITY  ACCESS MODES  STORAGECLASS  AGE
-gocd-app-server  Pending  standard  1s
-
-==> v1beta2/Deployment
-NAME             DESIRED  CURRENT  UP-TO-DATE  AVAILABLE  AGE
-gocd-app-agent   0        0        0           0          1s
-gocd-app-server  1        1        1           0          1s
-
-==> v1beta1/Ingress
-NAME             HOSTS  ADDRESS  PORTS  AGE
-gocd-app-server  *      80       1s
-
-==> v1/Pod(related)
-NAME                              READY  STATUS   RESTARTS  AGE
-gocd-app-server-667c4c947b-m7phq  0/1    Pending  0         1s
-
-==> v1beta1/ClusterRole
-NAME      AGE
-gocd-app  1s
-
-==> v1/Service
-NAME             TYPE      CLUSTER-IP    EXTERNAL-IP  PORT(S)                        AGE
-gocd-app-server  NodePort  10.27.254.21  <none>       8153:30967/TCP,8154:30434/TCP  1s
-
-
-NOTES:
-1. Get the GoCD server URL by running these commands:
-    It may take a few minutes before the IP is available to access the GoCD server.
-         echo "GoCD server public IP: http://$(kubectl get ingress gocd-app-server --namespace=gocd  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')"
-
-2. Get the service account token to configure the elastic agent plugin by doing the following:
-    A default role gocd-app with cluster scoped privileges has been configured.
-
-    The service account called gocd-app in namespace gocd has been associated with the role. To check,
-        secret_name=$(kubectl get serviceaccount gocd-app --namespace=gocd  -o jsonpath="{.secrets[0].name}")
-        kubectl get secret $secret_name --namespace=gocd -o jsonpath="{.data['token']}" | base64 --decode
-
-    To obtain the CA certificate, do
-        kubectl get secret $secret_name --namespace=gocd  -o jsonpath="{.data['ca\.crt']}" | base64 --decode
-
-
-3. The GoCD server URL for configuring the Kubernetes elastic agent plugin settings:
-    echo "https://$(kubectl get service gocd-app-server --namespace=gocd  -o jsonpath='{.spec.clusterIP}'):8154/go"
-
-4. The cluster URL for configuring the Kubernetes elastic agent plugin settings can be obtained by:
-    kubectl cluster-info
-
-5. Persistence
-    ################################################################################################
-    WARNING: The default storage class will be used. The reclaim policy for this is usually `Delete`.
-    You will lose all data at the time of pod termination!
-    ################################################################################################
+...
 ```
 
-The creation of the GoCD infrastructure can take several minutes. To check that the
-deployments completed, you can use the `kubectl` command:
+The creation of the GoCD infrastructure can take several minutes. To check that
+the deployments completed, you can use the `kubectl` command:
 
 ```shell
 $ kubectl get deployments --namespace gocd
@@ -162,6 +107,7 @@ gocd-app-server   *         35.190.56.218   80        13m
 After the GoCD infrastructure is up, you can access it in the browser using the
 external IP above - in this case http://35.190.56.218.
 
+<<<<<<< HEAD
 Now we can configure the Elastic Agent plugin, by clicking on the "ADMIN" menu
 and selecting "Plugins". We can then click on the "Kubernetes Elastic Agent Plugin"
 settings icon on the right. First we'll get the value for the Go Server URL config:
@@ -199,6 +145,12 @@ Then click "Save" and the plugin will be configured.
 Once the plugin is configured, we need to create an Elastic Agent profile that
 will be used to launch jobs in our pipeline. Click on the "ADMIN" tab and select
 "Elastic Agent Profiles", then click the "Add" button and set the following configuration:
+=======
+GoCD comes configured with a sample "Hello World" pipeline. For our pipeline, we
+need to create an Elastic Agent profile that will be used to launch jobs in our
+pipeline. Click on the "ADMIN" tab and select "Elastic Agent Profiles", then
+click the "Add" button and set the following configuration:
+>>>>>>> master
 
 * Id: `docker-jdk`
 * Image: `dtsato/gocd-agent-docker-dind-jdk:v18.2.0`
@@ -230,15 +182,15 @@ $ gcloud iam service-accounts keys create ~/key.json --iam-account gocd-agent@de
 created key [f6aa0b2bfd27caa51d72edea2a27e754a476c1e0] of type [json] as [/Users/dsato/key.json] for [gocd-agent@devops-workshop-123.iam.gserviceaccount.com]
 ```
 
-Now we can create our application pipeline!
-
-Since we don't have any pipelines configured, clicking on the "PIPELINES" tab at
-the top menu will take us to the pipeline creation wizard. We will provide the
-name "PetClinic" and click on "NEXT" to move to the next page.
+Now we can create our application pipeline! Clicking on the "ADMIN" tab and
+selecting "Pipelines" takes us to the pipeline admin screen. Clicking on "Create
+a new pipeline within this group" will take us to the pipeline creation wizard.
+We will provide the name "PetClinic" and click on "NEXT" to move to the next
+page.
 
 We will configure our material type to use a "Git" repository, point it to
 your Github repository URL and branch - in this case
-https://github.com/dtsato/devops-in-practice-workshop.git and `step-9`. You can
+https://github.com/dtsato/devops-in-practice-workshop.git and `master`. You can
 test the connection is configured properly by clicking the "CHECK CONNECTION"
 button. If everything is OK, you can click "NEXT" to move to the final page.
 
@@ -251,9 +203,10 @@ allows us to setup the command and arguments below:
 * Arguments: `clean package`
 
 When we click "FINISH", we are taken to the pipeline admin page, which allows us
-to add more jobs. Clicking on the `build-and-publish` job and opening the "Tasks"
+to add more jobs. Expanding the `build-and-publish` job and opening the "Tasks"
 tab, we can click on "Add new task", select "More...", and configure it to build
-and tag a Docker image:
+and tag a Docker image (on all the bash command arguments, add a line break
+between the `-c` option and the rest of the arguments):
 
 * Command: `bash`
 * Arguments: `-c docker build --tag pet-app:$GO_PIPELINE_LABEL --build-arg JAR_FILE=target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar .`
@@ -273,10 +226,11 @@ And finally we need a task to publish the Docker image to Google Container Regis
 * Command: `bash`
 * Arguments: `-c docker push us.gcr.io/$GCLOUD_PROJECT_ID/pet-app:$GO_PIPELINE_LABEL`
 
-You might have noticed that we are referencing a few environment variables in our
-tasks. `$GO_PIPELINE_LABEL` is defined by GoCD as a unique number for everytime
-the pipeline executes. The other variables we need to define by going into the
-"Environment Variables" tab and creating the following:
+You might have noticed that we are referencing a few environment variables in
+our tasks. `$GO_PIPELINE_LABEL` is defined by GoCD as a unique number for every
+time the pipeline executes. The other variables we need to define by going into
+the "Environment Variables" tab and creating the following (replace with your
+project ID):
 
 * Environment Variables:
   * `MAVEN_OPTS=-Xmx1024m`
@@ -292,4 +246,16 @@ $ cat ~/key.json | base64
 ewogICJ0eXBlIjogInNlcnZpY2VfYW...
 ```
 
-After we click "SAVE", we can test executing our pipeline by unpausing it.
+After we click "SAVE", go back to the "Job Settings" tab and configure the
+Elastic Profile Id field to use the `docker-jdk` profile.
+
+Before we can test our pipeline, make sure you commit and push all your local
+changes to your GitHub repository:
+
+```shell
+$ git add -A .
+$ git commit -m"Initial commit for pipeline"
+$ git push origin master
+```
+
+Then we can test executing our pipeline by un-pausing it.

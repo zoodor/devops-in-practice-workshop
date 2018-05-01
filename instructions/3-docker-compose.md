@@ -10,8 +10,8 @@
 
 ## Step by Step Instructions
 
-Create a file called `docker-compose.yml` at the root of the project with the following
-content:
+Create a file called `docker-compose.yml` at the root of the project with the
+following content:
 
 ```yaml
 version: '2'
@@ -20,9 +20,9 @@ services:
   pet-app:
     build:
       context: .
-      image: pet-app
       args:
         JAR_FILE: "./target/spring-petclinic-2.0.0.BUILD-SNAPSHOT.jar"
+    image: pet-app
     ports:
       - "8080:8080"
     links:
@@ -41,6 +41,8 @@ services:
       MYSQL_USER: "petclinic-user"
       MYSQL_PASSWORD: "S3cr3t"
 ```
+
+Then you can use `docker-compose build` to rebuild the application container:
 
 ```shell
 $ docker-compose build
@@ -61,6 +63,9 @@ Successfully built 66d4ecdaae23
 Successfully tagged devopsinpracticeworkshop_pet-app:latest
 ```
 
+Once the container image is built and tagged, you can start all the containers
+with a single `docker-compose up` command:
+
 ```shell
 $ docker-compose up
 Starting devopsinpracticeworkshop_database_1 ... done
@@ -72,4 +77,14 @@ database_1  | 2018-04-05T21:18:53.560127Z 0 [Note] mysqld (mysqld 5.7.21) starti
 ...
 ```
 
-Then you should be able to access the application by going to http://localhost:8080.
+Then you should be able to access the application by going to http://localhost:8080
+
+Once you tested that everything is working, you can stop the containers by
+pressing `Ctrl+C` and cleaning up using the `docker-compose down` command:
+
+```shell
+$ docker-compose down
+Removing devops-in-practice-workshop_pet-app_1  ... done
+Removing devops-in-practice-workshop_database_1 ... done
+Removing network devops-in-practice-workshop_default
+```

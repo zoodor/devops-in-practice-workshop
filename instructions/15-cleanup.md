@@ -57,23 +57,23 @@ from Google Container Registry, replacing your Project ID in two occurrences:
 ```shell
 $ for image in $(gcloud container images list-tags us.gcr.io/devops-workshop-123/pet-app --format='get(digest)'); do gcloud container images delete --force-delete-tags -q us.gcr.io/devops-workshop-123/pet-app@$image; done
 Digests:
-- us.gcr.io/devops-workshop-201010/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da
+- us.gcr.io/devops-workshop-123/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da
   Associated tags:
  - latest
-Deleted [us.gcr.io/devops-workshop-201010/pet-app:latest].
-Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da].
+Deleted [us.gcr.io/devops-workshop-123/pet-app:latest].
+Deleted [us.gcr.io/devops-workshop-123/pet-app@sha256:ac317e98ec1bee6680b888ec2de907264493ce78567a72d0de7e98aa0aa411da].
 Digests:
-- us.gcr.io/devops-workshop-201010/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf
+- us.gcr.io/devops-workshop-123/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf
   Associated tags:
  - 19
-Deleted [us.gcr.io/devops-workshop-201010/pet-app:19].
-Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf].
+Deleted [us.gcr.io/devops-workshop-123/pet-app:19].
+Deleted [us.gcr.io/devops-workshop-123/pet-app@sha256:a3bbf730cabb85237ba3cd1089232f1ffb85ae117b50aa32af366831439652cf].
 Digests:
-- us.gcr.io/devops-workshop-201010/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c
+- us.gcr.io/devops-workshop-123/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c
   Associated tags:
  - 17
-Deleted [us.gcr.io/devops-workshop-201010/pet-app:17].
-Deleted [us.gcr.io/devops-workshop-201010/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c].
+Deleted [us.gcr.io/devops-workshop-123/pet-app:17].
+Deleted [us.gcr.io/devops-workshop-123/pet-app@sha256:eb75759b588c3a11183bdc69b195b8e15eff9af8476a5d33d919220f3159c68c].
 ```
 
 Finally, we can delete the service account we created for the GoCD Agent, once

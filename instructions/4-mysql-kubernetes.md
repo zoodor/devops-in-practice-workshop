@@ -24,7 +24,7 @@ in plain-text on any configuration file
 First of all, let's start minikube to launch a local Kubernetes cluster:
 
 ```shell
-$ minikube start --bootstrapper kubeadm
+$ minikube start --kubernetes-version v1.9.4
 Starting local Kubernetes v1.9.4 cluster...
 Starting VM...
 Getting VM IP address...
@@ -43,14 +43,15 @@ or opening a web dashboard by running `minikube dashboard`:
 ```shell
 $ kubectl cluster-info
 Kubernetes master is running at https://192.168.99.100:8443
-KubeDNS is running at https://192.168.99.100:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 
 To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 $ minikube dashboard
 Opening kubernetes dashboard in default browser...
 ```
 
-Create secret:
+Now let's create a Kubernetes secret to store the MySQL user password (*please
+note the capital S*):
+
 ```shell
 $ kubectl create secret generic mysql-pass --from-literal password=S3cr3t
 secret "mysql-pass" created
@@ -60,7 +61,7 @@ default-token-8856j   kubernetes.io/service-account-token   3         2d
 mysql-pass            Opaque                                1         32s
 ```
 
-Create the kubernetes definition file:
+We can then create the kubernetes definition file under `kubernetes/mysql.yml`:
 
 ```yaml
 apiVersion: v1
@@ -148,18 +149,37 @@ Change the file permission and execute it:
 ```shell
 $ chmod a+x deploy.sh
 $ ./deploy.sh
-$ kubectl apply -f kubernetes/mysql.yml
-service "pet-mysql" created
-persistentvolumeclaim "mysql-pv-claim" created
-deployment "pet-mysql" created
++ kubectl apply -f kubernetes/mysql.yml
+service "pet-db" created
+persistentvolumeclaim "db-pv-claim" created
+deployment.apps "pet-db" created
 ```
 
-Validate:
+Validate that the pod started and is in "Running" status using the `kubectl get
+pods` command:
 
 ```shell
 $ kubectl get pods
 NAME                         READY     STATUS    RESTARTS   AGE
 pet-mysql-86955bcb8d-r5z9f   1/1       Running   0          39s
+```
+
+You can check the container logs by using the Pod name above and the `kubectl
+logs` command:
+
+```shell
+$ kubectl logs pet-db-7997cf844-n89sf
+Initializing database
+2018-04-30T10:25:21.695205Z 0 [Warning] TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details).
+2018-04-30T10:25:22.255572Z 0 [Warning] InnoDB: New log files created, LSN=45790
+2018-04-30T10:25:22.333983Z 0 [Warning] InnoDB: Creating foreign key constraint system tables.
+
+...
+```
+
+Also check that the service is running using the `kubectl get service` command:
+
+```shell
 $ kubectl get service
 NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
 kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP    3d

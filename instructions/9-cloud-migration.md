@@ -11,12 +11,12 @@
 
 * Add Terraform configuration files to a new `terraform` folder at the root of
 the project
-* Create a High Availability GKE cluster version `1.9.4-gke.1` across 2 zones in
+* Create a High Availability GKE cluster version `1.9.6-gke.1` across 2 zones in
 the `us-central1` region using 1 node per zone with instance type `n1-standard-2`
 (2 vCPUs, 7.5Gb memory)
 * Enable logging and monitoring to be sent to Stackdriver
-* Applying Terraform files should create the 2-node GKE cluster, and it's visible
-in the GCP Management Console
+* Applying Terraform files should create the 2-node GKE cluster, and it's
+visible in the GCP Management Console
 
 ## Step by Step Instructions
 
@@ -35,7 +35,7 @@ compute:
   zone: europe-west1-b
 core:
   disable_usage_reporting: 'True'
-  project: devops-workshop-199512
+  project: devops-workshop-123
 
 Pick configuration to use:
  [1] Re-initialize this configuration [default] with new settings
@@ -63,13 +63,13 @@ Your browser has been opened to visit:
 You are logged in as: [dtsato@gmail.com].
 
 Pick cloud project to use:
- [1] devops-workshop-201010
+ [1] devops-workshop-123
  [2] esoteric-crow-217
  [3] Create a new project
 Please enter numeric choice or text value (must exactly match list
 item):  1
 
-Your current project has been set to: [devops-workshop-201010].
+Your current project has been set to: [devops-workshop-123].
 
 ...
 Your Google Cloud SDK is configured and ready to use!
@@ -106,6 +106,10 @@ Operation finished successfully. The following command can describe the Operatio
  gcloud services operations describe operations/tmo-acf.9ccd76db-4ccc-40c8-b3a0-a38922fbc8f2
 ```
 
+PS: If you get an error that the project does not have billing enabled, follow
+the link provided in the error message to attach a billing account to the GCP
+project, then try the command again.
+
 Now let's create the `terraform/main.tf` file to describe our infrastructure
 using the Goggle Cloud provider (you will need to replace the `devops-workshop-123`
 value with your project ID):
@@ -122,13 +126,13 @@ resource "google_container_cluster" "cluster" {
   additional_zones = ["us-central1-b"]
   initial_node_count = 1
 
-  min_master_version = "1.9.4-gke.1"
+  min_master_version = "1.9.6-gke.1"
   master_auth {
     username = "admin"
     password = "choose-a-long-password"
   }
 
-  node_version = "1.9.4-gke.1"
+  node_version = "1.9.6-gke.1"
   node_config {
 	  machine_type = "n1-standard-2"
 	  disk_size_gb = "50"
@@ -207,7 +211,7 @@ Terraform will perform the following actions:
       master_auth.0.password:                <sensitive>
       master_auth.0.username:                "admin"
       master_version:                        <computed>
-      min_master_version:                    "1.9.4-gke.1"
+      min_master_version:                    "1.9.6-gke.1"
       monitoring_service:                    "monitoring.googleapis.com"
       name:                                  "devops-workshop-gke"
       network:                               "default"
@@ -226,7 +230,7 @@ Terraform will perform the following actions:
       node_config.0.preemptible:             "false"
       node_config.0.service_account:         <computed>
       node_pool.#:                           <computed>
-      node_version:                          "1.9.4-gke.1"
+      node_version:                          "1.9.6-gke.1"
       private_cluster:                       "false"
       project:                               <computed>
       region:                                <computed>
@@ -259,7 +263,7 @@ google_container_cluster.cluster: Creating...
   master_auth.0.password:                "<sensitive>" => "<sensitive>"
   master_auth.0.username:                "" => "admin"
   master_version:                        "" => "<computed>"
-  min_master_version:                    "" => "1.9.4-gke.1"
+  min_master_version:                    "" => "1.9.6-gke.1"
   monitoring_service:                    "" => "monitoring.googleapis.com"
   name:                                  "" => "devops-workshop-gke"
   network:                               "" => "default"
@@ -278,7 +282,7 @@ google_container_cluster.cluster: Creating...
   node_config.0.preemptible:             "" => "false"
   node_config.0.service_account:         "" => "<computed>"
   node_pool.#:                           "" => "<computed>"
-  node_version:                          "" => "1.9.4-gke.1"
+  node_version:                          "" => "1.9.6-gke.1"
   private_cluster:                       "" => "false"
   project:                               "" => "<computed>"
   region:                                "" => "<computed>"
