@@ -33,7 +33,7 @@ spec:
         track: stable
     spec:
       containers:
-      - image: us.gcr.io/devops-workshop-201010/pet-app
+      - image: us.gcr.io/devops-workshop-123/pet-app
         imagePullPolicy: IfNotPresent
         name: pet-web
         env:
@@ -51,3 +51,13 @@ spec:
         ports:
         - containerPort: 8080
           name: pet-web
+        livenessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
