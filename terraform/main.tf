@@ -1,5 +1,5 @@
 provider "google" {
-  project      = "devops-workshop-201010"
+  project      = "devops-workshop-123"
   region       = "us-central1"
 }
 
@@ -9,13 +9,13 @@ resource "google_container_cluster" "cluster" {
   additional_zones = ["us-central1-b"]
   initial_node_count = 1
 
-  min_master_version = "1.9.4-gke.1"
+  min_master_version = "1.9.6-gke.1"
   master_auth {
     username = "admin"
     password = "choose-a-long-password"
   }
 
-  node_version = "1.9.4-gke.1"
+  node_version = "1.9.6-gke.1"
   node_config {
 	  machine_type = "n1-standard-2"
 	  disk_size_gb = "50"
