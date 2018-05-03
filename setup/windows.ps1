@@ -15,6 +15,12 @@ if (-Not (Test-Path -Path "$env:ProgramData\Chocolatey")) {
   }
 }
 
+if (Get-Command javac -ErrorAction SilentlyContinue) {
+  Write-Output "Java is already installed!"
+} else {
+  choco install -y jdk8
+}
+
 if (Get-Command VBoxManage -ErrorAction SilentlyContinue) {
   Write-Output "VirtuaBox is already installed!"
 } else {
