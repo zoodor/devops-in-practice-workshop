@@ -7,10 +7,8 @@ connectivity.
 
 ## Installing Required Tools
 
-You can run the [`setup-workstation.sh`](./setup-workstation.sh) script to
-install the required tools (currently only supports MacOS using
-[HomeBrew](https://brew.sh/), working on Linux and Windows versions), or you can
-follow the instructions to install them manually:
+These are the tools required for the workshop and the links for installation
+instructions if you want to install them manually:
 
 * [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [Docker](https://docs.docker.com/install/) 18+
@@ -20,6 +18,21 @@ follow the instructions to install them manually:
 * [helm](https://github.com/kubernetes/helm/blob/master/docs/install.md) 2.8+
 * [terraform](https://www.terraform.io/intro/getting-started/install.html) 0.11+
 * [Google Cloud SDK tools](https://cloud.google.com/sdk/downloads) 196+
+
+### Auto-Install on Mac OS X
+
+You can run the [`setup-workstation.sh`](./setup-workstation.sh) script to
+install the required tools using [HomeBrew](https://brew.sh/).
+
+### Auto-Install on Windows + Powershell
+
+If you have Powershell, make sure you open an [administrative shell](http://www.howtogeek.com/194041/how-to-open-the-command-prompt-as-administrator-in-windows-8.1/)
+and you can execute the [`setup/windows.ps1`](./setup/windows.ps1) script to
+install the required tools using [Chocolatey](https://chocolatey.org).
+
+### Auto-Install on Linux
+
+In progres...
 
 ## Google Cloud Platform Account Setup
 
