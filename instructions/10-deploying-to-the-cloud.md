@@ -43,6 +43,13 @@ our local Docker host, by running:
 $ unset $(env | grep DOCKER_ | cut -d'=' -f1)
 ```
 
+**NOTE: If you are on Windows, or using `docker-machine`, run this command
+instead:**
+
+```shell
+$ eval $(docker-machine env default)
+```
+
 Now we can tag and push our local `pet-web` Docker image to GCR in the US region
 using the `docker tag` and `docker push` commands. Don't forget to replace the
 value of the project ID with your own:

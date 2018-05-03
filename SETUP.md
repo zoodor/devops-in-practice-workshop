@@ -7,19 +7,79 @@ connectivity.
 
 ## Installing Required Tools
 
-You can run the [`setup-workstation.sh`](./setup-workstation.sh) script to
-install the required tools (currently only supports MacOS using
-[HomeBrew](https://brew.sh/), working on Linux and Windows versions), or you can
-follow the instructions to install them manually:
+These are the tools required for the workshop and the links for installation
+instructions if you want to install them manually:
 
+* [Java](https://java.com/en/download/)
 * [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [Docker](https://docs.docker.com/install/) 18+
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 1.9.4+
 * [VirtualBox](https://www.virtualbox.org/wiki/Downloads) 5.2+
-* [Install minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) 0.25+
+* [Install minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/)
+0.25.2 (**WARNING: 0.26.1 currently has a bug**)
 * [helm](https://github.com/kubernetes/helm/blob/master/docs/install.md) 2.8+
 * [terraform](https://www.terraform.io/intro/getting-started/install.html) 0.11+
 * [Google Cloud SDK tools](https://cloud.google.com/sdk/downloads) 196+
+
+### Auto-Install on Mac OS X
+
+You can run the [`setup-workstation.sh`](./setup-workstation.sh) script to
+install the required tools using [HomeBrew](https://brew.sh/). After installing,
+if you didn't use HomeBrew before, you will probably need to restart your
+shell to add the path to the binaries to your `PATH`.
+
+Then you can continue to the
+[Google Cloud Platform Account Setup](#google-cloud-platform-account-setup)
+section.
+
+### Auto-Install on Windows
+
+I recommend installing [Git for Windows](https://gitforwindows.org), and use the
+Git Bash application for cloning the repository, executing the setup script, and
+going through the exercises of this workshop.
+
+Once installed, right-click the "Git Bash" icon on your desktop and select
+"Run as administrator", then click "Yes" on the popup that appears. Now you can
+clone de repository and you can execute the
+[`./setup-workstation.sh`](./setup-workstation.sh) script to install the
+required tools using [Chocolatey](https://chocolatey.org). After installation,
+you will need to restart your shell to add the path to the binaries to your
+`PATH`.
+
+Note: this setup will install Docker Toolbox, which allows running Docker on
+Windows using Docker-Machine on a VirtualBox VM. This requires virtualization
+features to be enabled. Once the install script completes and you restart your
+shell, run the following command to create the `docker-machine` VM:
+
+```shell
+$ docker-machine create -d virtualbox default
+Creating CA: C:\Users\Danilo\.docker\machine\certs\ca.pem
+Creating client certificate: C:\Users\Danilo\.docker\machine\certs\cert.pem
+Running pre-create checks...
+
+...
+
+Docker is up and running!
+```
+
+Once the docker-machine is running, run the following command to setup the
+docker CLI client:
+
+```shell
+$ eval $(docker-machine env default)
+```
+
+Then you can continue to the
+[Google Cloud Platform Account Setup](#google-cloud-platform-account-setup)
+section.
+
+### Auto-Install on Linux
+
+In progress...
+
+Then you can continue to the
+[Google Cloud Platform Account Setup](#google-cloud-platform-account-setup)
+section.
 
 ## Google Cloud Platform Account Setup
 
