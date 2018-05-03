@@ -34,6 +34,8 @@ section.
 
 ### Auto-Install on Windows
 
+*(This was tested on Windows 10)*
+
 I recommend installing [Git for Windows](https://gitforwindows.org), and use the
 Git Bash application for cloning the repository, executing the setup script, and
 going through the exercises of this workshop.
@@ -75,7 +77,20 @@ section.
 
 ### Auto-Install on Linux
 
-In progress...
+*(This was tested on Ubuntu trusty and CentOS 7)*
+
+You can run the [`setup-workstation.sh`](./setup-workstation.sh) script to
+install the required tools. Make sure you run it as `root`:
+
+```shell
+$ sudo ./setup-workstation.sh
+```
+
+On CentOS 7, you need to start the Docker service:
+
+```shell
+$ sudo service docker start
+```
 
 Then you can continue to the
 [Google Cloud Platform Account Setup](#google-cloud-platform-account-setup)
@@ -92,7 +107,8 @@ can create a project for the workshop and name it "DevOps Workshop".
 
 ## Download large files
 
-1. **Docker Images**: download the following Docker images by running:
+1. **Docker Images**: download the following Docker images by running (use
+  `sudo` on Linux):
   * `docker pull openjdk:8-jdk-alpine`
   * `docker pull mysql:5.7`
   * `docker pull dtsato/gomatic`
