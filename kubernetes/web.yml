@@ -24,7 +24,7 @@ spec:
       app: pet
       tier: frontend
   strategy:
-    type: Recreate
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -32,7 +32,7 @@ spec:
         tier: frontend
     spec:
       containers:
-      - image: pet-app
+      - image: pet-app:step-7
         imagePullPolicy: Never
         name: pet-web
         env:
@@ -50,3 +50,13 @@ spec:
         ports:
         - containerPort: 8080
           name: pet-web
+        livenessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /manage/health
+            port: pet-web
+          initialDelaySeconds: 30
