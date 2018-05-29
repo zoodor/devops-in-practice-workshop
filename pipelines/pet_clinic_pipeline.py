@@ -10,7 +10,7 @@ secret_variables = {'GCLOUD_SERVICE_KEY': 'ffODfSC4H4qQJi+AMzZpcXRiXi2hmj3YKI06/
 pipeline = configurator\
 	.ensure_pipeline_group("sample")\
 	.ensure_replacement_of_pipeline("PetClinic")\
-	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="step-13", ignore_patterns=set(['pipelines/*'])))
+	.set_git_material(GitMaterial("https://github.com/dtsato/devops-in-practice-workshop.git", branch="step-14", ignore_patterns=set(['pipelines/*'])))
 stage = pipeline.ensure_stage("commit")
 job = stage.ensure_job("build-and-publish")\
     .ensure_artifacts({TestArtifact("target/surefire-reports", "surefire-reports")})\
@@ -31,6 +31,18 @@ job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > sec
 job.add_task(ExecTask(['bash', '-c', 'gcloud auth activate-service-account --key-file secret.json']))
 job.add_task(ExecTask(['bash', '-c', 'gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --project $GCLOUD_PROJECT_ID']))
 job.add_task(ExecTask(['bash', '-c', './deploy.sh']))
+job.add_task(ExecTask(['bash', '-c', 'rm secret.json']))
+stage = pipeline.ensure_stage("approve-canary")
+stage.set_has_manual_approval()
+job = stage\
+	.ensure_job("complete-canary")\
+    .ensure_environment_variables({'GCLOUD_ZONE': 'us-central1-a', 'GCLOUD_PROJECT_ID': 'devops-workshop-123', 'GCLOUD_CLUSTER': 'devops-workshop-gke'})\
+    .ensure_encrypted_environment_variables(secret_variables)
+job.set_elastic_profile_id('kubectl')
+job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > secret.json && chmod 600 secret.json']))
+job.add_task(ExecTask(['bash', '-c', 'gcloud auth activate-service-account --key-file secret.json']))
+job.add_task(ExecTask(['bash', '-c', 'gcloud container clusters get-credentials $GCLOUD_CLUSTER --zone $GCLOUD_ZONE --project $GCLOUD_PROJECT_ID']))
+job.add_task(ExecTask(['bash', '-c', './complete-canary.sh']))
 job.add_task(ExecTask(['bash', '-c', 'rm secret.json']))
 
 configurator.save_updated_config()
