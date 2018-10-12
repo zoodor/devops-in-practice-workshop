@@ -24,9 +24,11 @@ in plain-text on any configuration file
 First of all, let's start minikube to launch a local Kubernetes cluster:
 
 ```shell
-$ minikube start --kubernetes-version v1.9.4
-Starting local Kubernetes v1.9.4 cluster...
+$ minikube start --memory 4096
+Starting local Kubernetes v1.10.0 cluster...
 Starting VM...
+Downloading Minikube ISO
+ 170.78 MB / 170.78 MB [============================================] 100.00% 0s
 Getting VM IP address...
 Moving files into cluster...
 Setting up certs...
@@ -160,15 +162,15 @@ pods` command:
 
 ```shell
 $ kubectl get pods
-NAME                         READY     STATUS    RESTARTS   AGE
-pet-mysql-86955bcb8d-r5z9f   1/1       Running   0          39s
+NAME                      READY     STATUS    RESTARTS   AGE
+pet-db-86955bcb8d-r5z9f   1/1       Running   0          39s
 ```
 
 You can check the container logs by using the Pod name above and the `kubectl
 logs` command:
 
 ```shell
-$ kubectl logs pet-db-7997cf844-n89sf
+$ kubectl logs pet-db-86955bcb8d-r5z9f
 Initializing database
 2018-04-30T10:25:21.695205Z 0 [Warning] TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details).
 2018-04-30T10:25:22.255572Z 0 [Warning] InnoDB: New log files created, LSN=45790
@@ -181,7 +183,7 @@ Also check that the service is running using the `kubectl get service` command:
 
 ```shell
 $ kubectl get service
-NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
-kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP    3d
-pet-mysql    ClusterIP   None         <none>        3306/TCP   45s
+NAME         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+kubernetes   ClusterIP   10.96.0.1       <none>        443/TCP    4m
+pet-db       ClusterIP   10.97.164.166   <none>        3306/TCP   1m
 ```

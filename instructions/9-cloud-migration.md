@@ -11,7 +11,7 @@
 
 * Add Terraform configuration files to a new `terraform` folder at the root of
 the project
-* Create a High Availability GKE cluster version `1.9.6-gke.1` across 2 zones in
+* Create a High Availability GKE cluster version `1.10.7-gke.6` across 2 zones in
 the `us-central1` region using 1 node per zone with instance type `n1-standard-2`
 (2 vCPUs, 7.5Gb memory)
 * Enable logging and monitoring to be sent to Stackdriver
@@ -126,13 +126,13 @@ resource "google_container_cluster" "cluster" {
   additional_zones = ["us-central1-b"]
   initial_node_count = 1
 
-  min_master_version = "1.9.6-gke.1"
+  min_master_version = "1.10.7-gke.6"
   master_auth {
     username = "admin"
     password = "choose-a-long-password"
   }
 
-  node_version = "1.9.6-gke.1"
+  node_version = "1.10.7-gke.6"
   node_config {
 	  machine_type = "n1-standard-2"
 	  disk_size_gb = "50"
@@ -211,7 +211,7 @@ Terraform will perform the following actions:
       master_auth.0.password:                <sensitive>
       master_auth.0.username:                "admin"
       master_version:                        <computed>
-      min_master_version:                    "1.9.6-gke.1"
+      min_master_version:                    "1.10.7-gke.6"
       monitoring_service:                    "monitoring.googleapis.com"
       name:                                  "devops-workshop-gke"
       network:                               "default"
@@ -230,7 +230,7 @@ Terraform will perform the following actions:
       node_config.0.preemptible:             "false"
       node_config.0.service_account:         <computed>
       node_pool.#:                           <computed>
-      node_version:                          "1.9.6-gke.1"
+      node_version:                          "1.10.7-gke.6"
       private_cluster:                       "false"
       project:                               <computed>
       region:                                <computed>
@@ -263,7 +263,7 @@ google_container_cluster.cluster: Creating...
   master_auth.0.password:                "<sensitive>" => "<sensitive>"
   master_auth.0.username:                "" => "admin"
   master_version:                        "" => "<computed>"
-  min_master_version:                    "" => "1.9.6-gke.1"
+  min_master_version:                    "" => "1.10.7-gke.6"
   monitoring_service:                    "" => "monitoring.googleapis.com"
   name:                                  "" => "devops-workshop-gke"
   network:                               "" => "default"
@@ -282,7 +282,7 @@ google_container_cluster.cluster: Creating...
   node_config.0.preemptible:             "" => "false"
   node_config.0.service_account:         "" => "<computed>"
   node_pool.#:                           "" => "<computed>"
-  node_version:                          "" => "1.9.6-gke.1"
+  node_version:                          "" => "1.10.7-gke.6"
   private_cluster:                       "" => "false"
   project:                               "" => "<computed>"
   region:                                "" => "<computed>"
