@@ -14,7 +14,6 @@ pipeline = configurator\
 stage = pipeline.ensure_stage("commit")
 job = stage\
     .ensure_job("build-and-publish")\
-    .ensure_artifacts({BuildArtifact("target/surefire-reports", "surefire-reports")})\
     .ensure_environment_variables({'MAVEN_OPTS': '-Xmx1024m', 'GCLOUD_PROJECT_ID': 'devops-workshop-123'})\
     .ensure_encrypted_environment_variables(secret_variables)\
     .set_elastic_profile_id("docker-jdk")
