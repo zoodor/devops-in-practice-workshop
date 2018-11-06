@@ -91,7 +91,7 @@ configuration as code, so we can run this command locally, replacing the IP
 address with your GoCD Server public IP from GKE:
 
 ```shell
-$ docker run -i --rm dtsato/gomatic python -m gomatic.go_cd_configurator -s 35.190.56.218 -p Meta
+$ docker run -i --rm dtsato/gomatic python -m gomatic.go_cd_configurator -s 35.244.213.114 -p Meta
 #!/usr/bin/env python
 from gomatic import *
 ...
