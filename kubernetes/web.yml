@@ -30,7 +30,7 @@ spec:
       labels:
         app: pet
         tier: frontend
-		track: stable
+        track: stable
     spec:
       containers:
       - image: us.gcr.io/devops-workshop-112233/pet-app
