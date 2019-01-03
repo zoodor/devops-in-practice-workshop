@@ -28,7 +28,7 @@ job.add_task(ExecTask(['bash', '-c', 'rm secret.json']))
 stage = pipeline.ensure_stage("approve-canary")
 stage.set_has_manual_approval()
 job = stage\
-	.ensure_job("complete-canary")\
+    .ensure_job("complete-canary")\
     .ensure_environment_variables({'GCLOUD_ZONE': 'us-central1-a', 'GCLOUD_CLUSTER': 'devops-workshop-gke'})
 job.set_elastic_profile_id('kubectl')
 job.add_task(ExecTask(['bash', '-c', 'echo $GCLOUD_SERVICE_KEY | base64 -d > secret.json && chmod 600 secret.json']))
